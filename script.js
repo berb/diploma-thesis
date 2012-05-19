@@ -32,6 +32,11 @@ var scripts = [
     "script/all/jquery.sausage.js"
 ];
 
+var pkBaseURL = (("https:" == document.location.protocol) ? "https://stats.benjamin-erb.de/piwik/" : "http://stats.benjamin-erb.de/piwik/");
+scripts.push(pkBaseURL + "piwik.js");
+
+
+
 for(i = 0; i < scripts.length; i++) {
     document.write("<script src='" + scripts[i] + "'></script>");
 }
@@ -68,7 +73,7 @@ function get_header() {
       <div class="page_header_spacer inner  ">\
         <div class="search_box">\
           <form class="search" action="http://www.google.com/search">\
-            <input type="hidden" name="as_sitesearch" value="guide.couchdb.org">\
+            <input type="hidden" name="as_sitesearch" value="http://berb.github.com/diploma-thesis/">\
             <input type="text" name="as_q" value="" class="search_field">\
             <input type="submit" value="'+l10n[lang].search+'" class="search_btn" />\
           </form>\
@@ -316,23 +321,14 @@ function get_lang() {
 }
 
 function track() {
-//TODO
-//document.write(unescape("%3Cscript src='" + pkBaseURL + "piwik.js' type='text/javascript'%3E%3C/script%3E"));\
 
-    var x = '\
-	<script type="text/javascript">\
-var pkBaseURL = (("https:" == document.location.protocol) ? "https://stats.benjamin-erb.de/piwik/" : "http://stats.benjamin-erb.de/piwik/");\
-</script><script type="text/javascript">\
-try {\
-var piwikTracker = Piwik.getTracker(pkBaseURL + "piwik.php", 6);\
-piwikTracker.trackPageView();\
-piwikTracker.enableLinkTracking();\
-} catch( err ) {}\
-</script><noscript><p><img src="http://stats.benjamin-erb.de/piwik/piwik.php?idsite=6" style="border:0" alt="" /></p></noscript>\
-    ';
-
-$("body").append(x);
-
+	try {
+		var piwikTracker = Piwik.getTracker(pkBaseURL + "piwik.php", 6);
+		piwikTracker.trackPageView();
+		piwikTracker.enableLinkTracking();
+	} catch( err ) {}
+	
+	$("body").append('<noscript><p><img src="http://stats.benjamin-erb.de/piwik/piwik.php?idsite=6" style="border:0" alt="" /></p></noscript>');
 }
 
 function access(evt){
