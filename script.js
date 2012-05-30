@@ -28,8 +28,9 @@ var l10n = {
 
 var scripts = [
     "http://ajax.googleapis.com/ajax/libs/jquery/1.5.2/jquery.min.js",
-    "https://ajax.googleapis.com/ajax/libs/jqueryui/1.8.11/jquery-ui.min.js",
-    "script/all/jquery.sausage.js"
+    "https://ajax.googleapis.com/ajax/libs/jqueryui/1.8.11/jquery-ui.min.js",    
+    "../script/all/jquery.sausage.js"
+//    "http://christophercliff.github.com/sausage/jquery.sausage.js"
 ];
 
 var pkBaseURL = (("https:" == document.location.protocol) ? "https://stats.benjamin-erb.de/piwik/" : "http://stats.benjamin-erb.de/piwik/");
@@ -212,7 +213,7 @@ function add_toc() {
         old_depth = new_depth;
     });
     html += "</li></ul>";
-    $(".sidebar").append("<h3>"+l10n[lang].home+"</h3>");
+    $(".sidebar").append("<h3>Contents</h3>");
     $(".sidebar").append(html);
 }
 
@@ -240,7 +241,7 @@ function build_edition(matches) {
         );
     } else {
         $(".sidebar").append(
-            "<h3><a href='index.html'>Original Thesis Edition</a></h3>"
+            "<h3><a href='index.html'>Table of Contents</a></h3>"
         );
     }
     add_prev_link();
@@ -259,7 +260,7 @@ function build_draft(matches) {
         );
     } else {
         $(".sidebar").append(
-            "<h3><a href='index.html'>Collaborative Edition</a></h3>"
+            "<h3><a href='index.html'>Table of Contents</a></h3>"
         );
     }
     add_prev_link();
@@ -321,13 +322,11 @@ function get_lang() {
 }
 
 function track() {
-
 	try {
 		var piwikTracker = Piwik.getTracker(pkBaseURL + "piwik.php", 6);
 		piwikTracker.trackPageView();
 		piwikTracker.enableLinkTracking();
 	} catch( err ) {}
-	
 	$("body").append('<noscript><p><img src="http://stats.benjamin-erb.de/piwik/piwik.php?idsite=6" style="border:0" alt="" /></p></noscript>');
 }
 
@@ -347,8 +346,8 @@ document.onready = function() {
         build();
         autolink();
         chop();
-        sausage();
         track();
+        sausage();
     } catch (error) {
         // uh oh
     }
