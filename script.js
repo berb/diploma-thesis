@@ -273,8 +273,8 @@ function build_index(matches) {
 }
 
 function autolink() {
-    $("*/[id!='']").wrap(function() {
-        return "<a class='anchor' href='#" + $(this).attr("id") + "' />";
+    $("*/[id!='']:not(.figure)").wrap(function() {
+	        return "<a class='anchor' href='#" + $(this).attr("id") + "' />";
     });
 }
 
@@ -284,7 +284,7 @@ function chop() {
     var $as = $content.find("a.anchor");
     var j = -1;
     $as.each(function(i, el) {
-        $sections.append("<section/>"); 
+    	$sections.append("<section/>"); 
     });
     $content.children().each(function(i, el) {
         var $el = $(el);
