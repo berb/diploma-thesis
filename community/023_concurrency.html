@@ -1,0 +1,322 @@
+<title>2.3 Concurrency</title>
+
+<meta charset="utf-8">
+
+<link rel="stylesheet" href="../style.css">
+
+<link rel="prev" href="022_webapps.html"> 
+
+<link rel="next" href="024_scalability.html"> 
+
+<script src="../script.js"></script>
+
+<h2 id="con">2.3 Concurrency</h2>
+
+<p>Concurrency is a property of a system representing the fact that
+multiple activities are executed at the same time. According to Van
+Roy&nbsp;[<A
+ HREF="0_bibliography.html#Roy2004">Roy04</A>], a program having "several independent activities, each of
+which executes at its own pace". 
+In addition, the activities may perform some kind of interaction among them. 
+The concurrent execution of activities can take place in different environments,
+such as single-core processors, multi-core processors, multi-processors or even
+on multiple machines as part of a distributed system.
+Yet, they all share the same underlying challenges: providing mechanisms to
+control the different flows of execution via coordination and synchronization,
+while ensuring consistency.
+
+<P>
+Apart from recent hardware trends towards multi-core and multiprocessor
+systems, the use of concurrency in applications is generally motivated by
+performance gains. Cantrill et al.&nbsp;[<A
+ HREF="0_bibliography.html#Cantrill2008">Can08</A>] describe three fundamental ways how
+the concurrent execution of an application can improve its performance:
+<DL>
+<DT><STRONG>Reduce latency</STRONG></DT>
+<DD>A unit of work is executed in shorter time by
+  subdivision into parts that can be executed concurrently. 
+  
+</DD>
+<DT><STRONG>Hide latency</STRONG></DT>
+<DD>Multiple long-running tasks are executed together by
+  the underlying system. This is particularly effective when the tasks are
+  blocked because of external resources they must wait upon, such as disk or
+  network I/O operations.
+  
+</DD>
+<DT><STRONG>Increase throughput</STRONG></DT>
+<DD>By executing multiple tasks concurrently, the
+  general system throughput can be increased. It is important to notice that
+  this also speeds up independent sequential tasks that have not been specifically designed
+  for concurrency yet.
+</DD>
+</DL>
+
+<P>
+The presence of concurrency is an intrinsic property for any kind of
+distributed system. Processes running on different machines form a common system
+that executes code on multiple machines at the same time. 
+
+<P>
+Conceptually, all web applications can be used by various users at the same time.
+Thus, a web application is also inherently concurrent. This is not
+limited to the web server that must handle multiple client connections in
+parallel. Also the application that executes the associated business logic of a
+request and the backend data storage are confronted with concurrency.
+
+<h3 id="conpara">Concurrency and Parallelism</h3>
+<p>In the literature, there are varying definitions of the terms concurrency and parallelism, and their relation. Sometimes both terms are even used synonymously. We will now introduce a distinction of both terms and of their implications on programming. </p>
+
+<h4 id="convspara">Concurrency vs. Parallelism</h4>
+<p>Concurrency is a conceptual property of a program, while parallelism is a runtime state. Concurrency of a program depends on the programming language and the way it is coded, while parallelism depends on the actual runtime environment. Given two tasks to be executed concurrently, there are several possible execution orders. They may be performed sequentially (in any order), alternately, or even simultaneously. Only executing two different tasks simultaneously yields true parallelism. In terms of scheduling, parallelism can only be achieved if the hardware architecture supports parallel execution, like multi-core or multi-processor systems do. A single-core machine will also be able to execute multiple threads concurrently, however it can never provide true parallelism. </p>
+
+<h4 id="conparaprog">Concurrent Programming vs. Parallel Programming</h4>
+<p>Differentiating concurrent and parallel programming is more tedious, as both are
+targeting different goals on different conceptual levels. 
+Concurrent programming tackles concurrent and interleaving tasks and the
+resulting complexity due to a nondeterministic control flow. Reducing and
+hiding latency is equally important to improving throughput.  
+Instead, parallel programming favors a deterministic control flow and
+mainly reaches for optimized throughput. 
+The internals of a web server are the typical outcome of concurrent programming,
+while the parallel abstractions such as Google's <TT>MapReduce</TT>&nbsp;[<A
+ HREF="0_bibliography.html#Dean2008">Dea08</A>]
+or Java's <TT>fork/join</TT>&nbsp;[<A
+ HREF="0_bibliography.html#Lea2000">Lea00</A>] provide a good example of what
+parallel programming is about.
+Parallel programming is also essential for several specialized tasks. For
+instance, a graphics processing unit is designed for massive floating-point
+computational power and usually runs a certain numerical computation in parallel
+on all of its units at the same time. High-performance computing is another
+important area of parallel programming. It takes advantage of computer clusters
+and distributes sub-tasks to cluster nodes, thus speeding up complex
+computations.</p>
+
+<h4 id="conarch">Computer Architectures Supporting Concurrency</h4>
+
+<div class="figure" id="table/3">
+
+<table>
+
+<thead>
+
+<tr><th></th><th>Single Instruction</th><th>Multiple Instruction</th></tr>
+
+</thead>
+
+<tbody>
+
+<tr><th>Single Data</th><td style="text-align:center">SISD</td><td style="text-align:center">MISD</td></tr>
+
+<tr><th>Multiple Data</th><td style="text-align:center">SIMD</td><td style="text-align:center">MIMD</td></tr>
+
+</tbody>
+
+</table>
+
+<p class="caption">Table 2.3: Flynn’s taxonomy classifying different computer architectures.</p>
+
+</div>
+
+<p>
+The previous differentiation can also be backed by a closer look on the
+architectures where physical concurrency is actually possible. We will therefore
+refer to Flynn's taxonomy&nbsp;[<A
+ HREF="0_bibliography.html#Flynn1972">Fly72</A>], which is shown in <a href="#table/3">table&nbsp;2.3</a>. This
+classification derives four different types of computer architectures, based on the instruction
+concurrency and the available data streams. The SISD class is represented
+by traditional single processor machines. 
+We do not consider them further due to their lack of physical concurrency. 
+MISD is a rather exotic
+architecture class, sometimes used for fault-tolerant computing where the same instructions
+are executed redundantly. 
+It is also not relevant for our considerations. Real
+parallelism can only be exploited on architectures that support multiple data
+streams--SIMD and MIMD. SIMD represents the aforementioned
+architecture class targeting dedicated parallel executions of computations
+such as graphics processing unit and vector processors. 
+SIMD exploits 
+data-level parallelism which is not suitable for handling web requests.
+Accordingly, this type of
+architecture is not relevant for our consideration.  
+We will focus on the last remaining class, MIMD. It represents architectures that rely on a
+shared or distributed memory and thus includes
+architectures possessing multiple cores, multiple CPUs or even multiple
+machines. In the following, we  will primarily focus on concurrent programming 
+(parallel execution of subtasks is partially relevent in <a href="index.html#chapter/5">chapter 5</a>) and only on the MIMD class of architectures.</p>
+
+<h3 id="models">Models for Programming Concurrency</h3>
+
+<p>Van Roy&nbsp;[<A
+ HREF="0_bibliography.html#Roy2004">Roy04</A>] introduces four main approaches for programming
+concurrency that we will examine briefly (see figure <A HREF="#fig:conmodel">:autorefModels for Programming Concurrency (Van Roy&nbsp;[<A
+ HREF="0_bibliography.html#Roy2004">Roy04</A>])2.0</A>). The more important models will be studied
+later as potential solutions for programming concurrency inside web
+architectures, especially in <a href="index.html#chapter/5">chapter 5</a>.
+
+<div class="figure" id="figure/1">
+<img src="resources/concurrency.svg" style="width:100%">
+<p class="caption">Figure 2.1: Models for Programming Concurrency (Van Roy Van Roy&nbsp;[<A
+ HREF="0_bibliography.html#Roy2004">Roy04</A>])</p>
+</div>
+
+<h4 id="seq">Sequential Programming</h4>
+<p>In this deterministic programming model, no concurrency is used at all. In its
+strongest form, there is a total order of all operations of the program. Weaker
+forms still keep the deterministic behaviour. However, they either make no
+guarantees on the exact execution order to the programmer <SPAN  CLASS="textit">a priori</SPAN>. Or
+they provide mechanisms for explicit preemption of the task currently active,
+as co-routines do, for instance.</p>
+
+<h4 id="decl">Declarative Concurrency</h4>
+<p>Declarative programming is a programming model that favors implicit control
+flow of computations. Control flow is not described directly, it is rather a
+result of computational logic of the program.
+The declarative concurrency model extends the declarative programming model by
+allowing multiple flows of executions. It adds implicit concurrency that is
+based on a data-driven or a demand-driven approach. While this introduces some
+form of nondeterminism at runtime, the nondeterminism is generally not
+observable from the outside.</p>
+
+<h4 id="messagep">Message-passing Concurrency</h4>
+<p>This model is a programming style that allows concurrent activities to communicate via messages. Generally, this is the only allowed form of interaction between activities which are otherwise completely isolated. Message passing can be either synchronous or asynchronous resulting in different mechanisms and patterns for synchronization and coordination. </p>
+
+<h4 id="shared">Shared-state Concurrency</h4>
+<p>Shared-state concurrency is an extended programming model where multiple activities are allowed to access contended resources and states. Sharing the exact same resources and states among different activities requires dedicated mechanisms for synchronization of access and coordination between activities. The general nondeterminism and missing invariants of this model would otherwise directly cause problems regarding consistency and state validity.</p>
+
+<h3 id="syncoord">Synchronization and Coordination as Concurrency Control</h3>
+
+<P>
+Regardless of the actual programming model, there must be an implicit or
+explicit control over concurrency (at least within the runtime environment). It
+is both hazardous and unsafe when multiple flows of executions simultaneously operate in
+the same address space without any kind of agreement on ordered access.
+Two or more activities might access the same data and thus induce data
+corruption as well as inconsistent or invalid application state. Furthermore,
+multiple activities that work jointly on a problem need an agreement on
+their common progress. Both issues represent fundamental challenges of
+concurrency and concurrent programming. 
+
+<P>
+<SPAN  CLASS="textit">Synchronization</SPAN> and <SPAN  CLASS="textit">coordination</SPAN> are two mechanisms
+attempting to tackle this. Synchronization, or more precisely
+<SPAN  CLASS="textit">competition synchronization</SPAN> as labeled by Sebesta&nbsp;[<A
+ HREF="0_bibliography.html#Sebesta2005">Seb05</A>],
+is a mechanism that controls access on shared resources between multiple
+activities. This is especially important when multiple activities require access
+to resources that cannot be accessed simultaneously. A proper synchronization
+mechanism enforces exclusiveness and ordered access on the resource by different
+activities. 
+Coordination, sometimes also named <SPAN  CLASS="textit">cooperation synchronization</SPAN> 
+(Sebesta&nbsp;[<A
+ HREF="0_bibliography.html#Sebesta2005">Seb05</A>]), aims at the orchestration of collaborating
+activities. 
+
+<P>
+Synchronization and coordination are sometimes conflated in practice.
+Both mechanisms can be either implicit or explicit (Van Roy&nbsp;[<A
+ HREF="0_bibliography.html#Roy2004">Roy04</A>]).
+<SPAN  CLASS="textit">Implicit synchronization</SPAN> hides the synchronization as part of the
+operational semantics of the programming language. Thus, it is not part  
+of the visible program code. On the contrary, <SPAN  CLASS="textit">explicit synchronization</SPAN>
+requires the programmer to add explicit synchronization operations to the code.
+
+<h3 id="tasks">Tasks, Processes and Threads</h3>
+<p>So far, our considerations of concurrency were based on computer architectures
+and programming models. We will now show how they interrelate by introducing
+the actual activity entities used and provided by operating systems and how
+they are mapped to the hardware. 
+Note that we will use the term <SPAN  CLASS="textit">task</SPAN> as a general abstraction for a unit
+of execution from now on. </p>
+
+<div class="figure" id="figure/2">
+<img src="resources/conc_exec.svg" style="width:100%">
+<p class="caption">Figure 2.2: Orthogonal concepts for the concurrent execution of multiple tasks.
+</p>
+</div>
+
+
+<P>
+The ability to execute multiple tasks concurrently has
+been a crucial requirement for operating systems. It is addressed by
+<SPAN  CLASS="textit">multitasking</SPAN>. This mechanism manages an interleaved and alternating
+execution of tasks. In case of multiple CPU cores or CPUs, multitasking can be
+complemented by <SPAN  CLASS="textit">multiprocessing</SPAN>, which allocates different tasks on
+available cores/CPUs. The key concept for both mechanisms is
+<SPAN  CLASS="textit">scheduling</SPAN>, which organizes the assignment of processing time to tasks
+using <SPAN  CLASS="textit">scheduling strategies</SPAN>. Appropriate strategies can have different
+aims, such as fair scheduling between tasks, fixed latencies for task executions
+or maximum utilization. Another distinction of scheduling strategies is their
+preemption model. In the <SPAN  CLASS="textit">preemptive</SPAN> model, the scheduler assigns
+processing time to a task and eventually revokes it. The task has no
+control over the preemption. In a <SPAN  CLASS="textit">cooperative</SPAN> model, the task itself
+has the responsibility of yielding after some time to allow another task to run.
+Scheduling is an important duty of any operating system. However, it is
+also noteworthy that applications themselves can provide some kind of scheduling
+of their own internal tasks, as we will see in <a href="index.html#chapter/4">chapter 4</a> and <a href="index.html#chapter/5">chapter 5</a>.
+
+<P>
+Operating systems generally provide different types of tasks--processes and
+threads. Essentially, they represent different task granularities. A
+<SPAN  CLASS="textit">process</SPAN> is a heavyweight task unit and owns system resources
+such as memory and file descriptors that are allocated from the operating system.
+<SPAN  CLASS="textit">Threads</SPAN> are leightweight task units that belong to a certain process.
+All threads allocated within the same process share memory, file descriptors and
+other related resources. Creating threads is a relatively cheap operation
+compared to the creation of new processes.
+
+<P>
+Most concurrent applications make heavy use of multiple threads. However,
+this does not imply the availability of threads as explicit entities of the
+programming language itself. Instead, the execution environment might map other
+concurrency constructs of a programming language to actual threads at runtime.
+Similarly, the shared-state property of multithreading might be idiomatically
+hidden by the language.</p>
+
+<h3 id="lang">Concurrency, Programming Languages and Distributed Systems</h3>
+<p>Next, we consider the strong relationship between concurrent
+programming, programming languages and distributed systems when building large
+architectures. Programming distributed systems introduces a set of additional
+challenges compared to regular programming. The "Fallacies of Distributed
+Computing"&nbsp;[<A
+ HREF="0_bibliography.html#Rotem-Gal-Oz2006">RGO06</A>] provide a good overview on some of the important pitfalls that
+must be addressed. 
+For instance, not anticipating errors in a network or ignoring the different semantics of local 
+and remote operation are common misconceptions that are described.
+
+<P>
+From a software engineering perspective, the major challenges are fault
+tolerance, integration of distribution aspects and reliability. 
+As we have already seen before, distributed systems are inherently concurrent
+and parallel, thus concurrency control is also essential.
+
+<P>
+Programming languages to be used for distributed systems must either incorporate
+appropriate language idioms and features to meet these requirements. Otherwise, 
+frameworks are necessary to provide additional features on top of the core
+language.
+
+<P>
+Ghosh et al.&nbsp;[<A
+ HREF="0_bibliography.html#Ghosh2011">Gho11</A>] have considered the impact of programming
+languages on distributed systems. They pointed out that mainstream
+languages like Java and C++  are still the most popular choice of developing distributed systems.
+They are combined with middleware frameworks most of the time, providing additional features.
+However, the strengths of general purpose languages do not cover the main requirements of distributed
+systems to a great extent. 
+The experiences with RPC-based systems (see Kendall et al.&nbsp;[<A
+ HREF="0_bibliography.html#Kendall1994">Ken94</A>]) and their object-based descendents (see Vinoski&nbsp;[<A
+ HREF="0_bibliography.html#Vinoski2008">Vin08</A>])
+have raised some questions to this approach. 
+Middleware systems providing distributability compensate for features missing at the core of a language. 
+Thus, the systems actually meet the necessary requirements, but they are often also cumbersome to use and introduce superfluous complexity.
+
+<P>
+Recently, there has been an increasing interest in various alternative
+programming languages embracing high-level concurrency and distributed computing. 
+Being less general, these languages focus on important concepts and
+idioms for distributed systems, such as component abstractions, fault tolerance and
+distribution mechanisms. It is interesting for our considerations that most of
+these languages oriented towards distributed computing also incorporate
+alternative concurrency approaches. We will have a  brief look on some of these
+languages as part of <a href="index.html#chapter/5">chapter 5</a>.</p> 

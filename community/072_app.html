@@ -1,0 +1,57 @@
+<title>7.2 Picking the Right Concurrency Concepts for Application Logic</title>
+
+<meta charset="utf-8">
+
+<link rel="stylesheet" href="../style.css">
+
+<link rel="prev" href="071_webserv.html"> 
+<link rel="next" href="073_pers.html"> 
+
+<script src="../script.js"></script>
+
+<h2 id="app">7.2 Picking the Right Concurrency Concepts for Application Logic</h2>
+
+<p>The main focus of <a href="index.html#chapter/5">chapter 5</a> lies on concurrency concepts for application logic programming. 
+In order to recommend appropriate concepts, we need to recap the different concurrency requirements that a web application might imply.
+On one hand, we might want to <SPAN  CLASS="textit">reduce the latency</SPAN> of request handling by parallelizing independent operations of a request. On the other hand, we might want to <SPAN  CLASS="textit">coordinate different pending requests</SPAN> in order to provide notification mechanisms and support server-initiated events. Furthermore, interactive and collaborative applications cannot rely on state that is solely isolated in the storage backend. Instead, some applications require to <SPAN  CLASS="textit">share highly fluctuating and variable state</SPAN> inside the application servers.
+
+<p>
+The reduction of latency of a request can mainly be achieved by parallelizing independent operations. For instance, parallel database queries and subdivided computations decrease the overall latency. 
+An important property for accelerating requests is the ratio of CPU-bound and I/O-bound operations. Note that access to our platform components represents an I/O-bound operation.
+The latency of independent, CPU-bound operations can only be decreased by using more threads on more cores. When additional threads are used for heavy I/O parallelism, we roughly approach the same problem as seen previously for web servers. Using too many threads for I/O-bound operations results in decreasing performance and scalability issues due to context switching overhead and memory consumption.
+For thread-based programming models, the notion of futures or promises helps dispatching independent tasks and eventually collecting their results, without the need for complex synchronization. 
+Actors can be used for I/O-bound and CPU-bound operations, although the efficiency depends on the underlying implementation.
+Event-driven architectures go nicely with primarily I/O-bound tasks, but they are entirely unusable for computationally heavy operations, as long as these operations are not outsourced to external components.       
+
+<P>
+Coordinating requests and synchronizing shared application state are related. 
+A first distinction is the scope of these operations. Some applications allow to partially isolate some application state and groups of users for interactivity. 
+For instance, a browser multiplayer game session with dozens of players represents a conceptual instance with a single shared application state. A similar example is a web-based collaborative software application like a real-time word processor, running editing sessions with several users.
+When using session affinity, a running application instance can be transparently mapped to a designated application server. As a result, there is no need to share states between application servers, because each session is bound to a single server (a server can host multiple application sessions, though). In turn, the server can entirely isolate application state for this session and easily coordinate pending requests for notifications. 
+In this case, event-driven architectures, actor-based systems and STM are appropriate concepts. The usage of locks should be avoided due to the risk of deadlocks or race conditions. Note that binding specific state to a certain server is contrary to our shared-nothing design of application servers. 
+
+<P>
+In other cases, application state is global and cannot be divided into disjoint partitions. For instance, the instant messaging capabilities of a large social web application requires that any user might contact any other user.
+This leads to a scenario where state must be either outsourced to a distributed backend component (e.g. a distributed key/value store with pub/sub support such as redis),
+or it requires application servers to mutually share global state.
+The first variant works with all concurrency concepts. The latter is only applicable when a distributed STM or a distributed actor system is in use. Note however, these two approaches are contrary to our preferred shared-nothing style, as they introduce dependencies between application servers.
+
+<p>
+The conventional concept of a thread-based request execution model is still a valid approach when none of the aforementioned concurrency requirements are actually needed. 
+In this case, the idea of a simple sequence of operations provides a very intuitive model for developers.
+If there is no imperative need to share state inside the application logic, dedicated backend storages should always be preferred. 
+When retaining to a thread-based model and shared state inside the application logic is acutally needed, the usage of STM should be favored in order to prevent locking issues.
+
+<P>
+The actor model provides a versatile solution for multiple scenarios, but requires the developer to embrace the notions of asynchrony and distribution. 
+Some concurrency frameworks such as <a href="http://www.akka.io/">akka</a> complement the actor model with other concepts such as STM and additional fault tolerance.
+This represents a strong foundation for distributed application architectures and should be considered when large scale is intended since the very beginning. 
+
+<P>
+If the application logic of a web application primarily integrates the services provided by other platform components and does not require computationally expensive operations, single-threaded event-driven architectures are a good foundation. When used in a shared-nothing style, a sustaining scale-out can be accomplished by constantly adding new instances.
+
+<P>
+The actor model and single-threaded event-driven architecture share several principles. Both embrace asynchrony, queueing based on messages resp. events, and isolated state--either inside an actor or inside a single-threaded application instance.
+In fact, our web architecture combined with either one of these concepts for application logic resembles the original SEDA architecture&nbsp;[<A
+ HREF="0_bibliography.html#Welsh2001">Wel01</A>] to a great extent.
+Unlike SEDA, which describes the internals of a single server, we are then using very similar concepts for a distributed architecture.     

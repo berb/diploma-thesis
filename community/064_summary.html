@@ -1,0 +1,38 @@
+<title>6.4 Summary</title>
+
+<meta charset="utf-8">
+
+<link rel="stylesheet" href="../style.css">
+
+<link rel="prev" href="063_types.html"> 
+<link rel="next" href="070_index.html"> 
+
+<script src="../script.js"></script>
+
+<h2 id="summary">6.4 Summary</h2>
+
+<P>
+Large-scale web applications require solid backend systems for persistent storage. Essential requirements are
+availability, high performance and of course scalability for both read and write operations and for data volumes. These requirements cannot
+be addressed with a single database instance. Instead, distributed database systems are needed in order to 
+support fault-tolerance, to scale out and to cope with highly concurrent read/write operations.
+
+<P>
+The CAP theorem challenges distributed database systems, as it rules out guaranteeed consistency, availability
+and partition tolerance at the same time. In distributed systems, failures cannot be avoided, but must rather be anticipated, so partition tolerance is virtually mandatory. 
+Consequently, web applications are required to find a trade-off between strict consistency and high availability.
+The traditional ACID paradigm favors strong consistency, while the alternative BASE paradigm prefers
+basic availability and eventual consistency. Although exact consistency requirements depend on the actual application scenario, it is generally feasible to develop web applications with either one of them. 
+However, the application must be aware of the consistency model in use, especially when relaxed guarantees are chosen and must be tolerated.
+
+<P>
+The internals of distributed database systems combine traditional database concepts with mechanisms from
+distributed systems, as the database consists of multiple communicating machines. This includes algorithms
+for consensus, distributed transactions or revisioning based on vector clocks. Replication is an important
+feature for availability and fault-tolerance. Partitioning addresses the need to handle large amounts of data
+and to allocate them to different physical nodes.
+
+<P>
+Relational database systems are built around the concept of relational data tuples and transactional operations. Although this model fits many business applications and can be used in various scenarios, there are other
+database concepts that provide different characteristics and their own benefits. These concepts include
+simple key/value data organization, relaxed or no schema definitions, column-oriented table alignment or the usage of graphs as the underlying data structure.

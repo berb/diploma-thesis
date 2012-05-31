@@ -1,0 +1,106 @@
+<title>7.3 Choosing a Storage Backend</title>
+
+<meta charset="utf-8">
+
+<link rel="stylesheet" href="../style.css">
+
+<link rel="prev" href="072_app.html"> 
+<link rel="next" href="074_summary.html"> 
+
+<script src="../script.js"></script>
+
+<h2 id="pers">7.3 Choosing a Storage Backend</h2>
+
+
+<p>We have considered several types of distributed database systems that can be used as storage backend for large-scale web applications in <a href="index.html#chapter/6">chapter 6</a>. 
+Assuming that a single database instance does not fit our requirements, due to missing
+opportunities to scale out and to provide high availability, we need to choose a proper distributed
+database system for our applications. 
+We have seen the trade-off between strong consistency and eventual consistency.
+The hype around non-relational database systems has led to a myriad of different database systems to choose from. 
+In practice, the quest for the right system is often distorted by general arguments between the SQL camp and NoSQL camp by this time.  
+The following guideline provides suggestions on how to choose the appropriate system. 
+
+<P>
+The primary question is the <SPAN  CLASS="textit">actual data model</SPAN> imposed by the application. It is essential to focus on the intrinsic data model of the application first, before considering any database-specific models.
+It may also help to identify certain groups of data items that represent independent domains in the application.
+Additionally, it is helpful to keep in mind future requirements that might change the data model. 
+For instance, an agile development style with frequent changes to the data model should be taken into account.  
+
+<P>
+Next, the <SPAN  CLASS="textit">scalability requirements</SPAN> must be determined. Scaling out a blog application using additional database 
+instances is a different undertaking than growing a large e-commerce site that already starts with multiple data centers.
+Also the dimensions of scale should be anticipated. Will the application be challenged by vastly parallel access to the persistence layer, or is it the fast-growing amount of data to store? 
+The ratio of read and write operations can be important as well as the impact of search operations. 
+
+<P>
+The third of these preliminary considerations aims at <SPAN  CLASS="textit">consistency requirements</SPAN> of the application.
+It is obvious that strong consistency is generally preferred by all parties involved. However, a review 
+of the impact of stale data in different manifestations may help to define parts of the data model that can aligned with relaxed consistency requirements. 
+
+<p>
+Due to their maturity, their features and our experiential basis, <SPAN  CLASS="textit">relation database systems</SPAN> 
+still represent a strong foundation for the persistence layer of web applications. 
+This is especially true, when the applications require strong consistency guarantees, transactional
+behaviors and high performance for transaction processing. Also, the expressiveness of SQL as a query
+language is conclusive and queries can be executed ad-hoc at any time.
+In order to tackle scalability for relational database systems, it is important to keep in mind 
+functional and data partitioning strategies from the start. Sharding an unprepared relational database
+is extremely hard. But when denormalization and partitioning are designed into the data model, 
+the opportunities for a sustainable scale-out are vastly increased.
+
+<P>
+<SPAN  CLASS="textit">Document stores</SPAN> are interesting as they provide a very flexible data modeling, that combines
+structured data but does not rely on schema definitions. It allows the rapid evolving of data models and
+fits very well to an agile development approach.   
+The mapping of structured key-value pairs (i.e. documents) to domain objects is also very natural 
+for many web applications, especially applications that are built around social objects.
+If database operations primarily involve create/read/update/delete operations, and more complex queries
+can be defined already in the development phase, document stores represent a good fit.    
+The document-oriented data formats like JSON or XML are friendly for web developers. 
+Moreover, many document stores allow storing binary files such as images inside their document model, which can also be useful for web applications. 
+Due to the underlying organization of documents as key/value tuples, document stores can easily scale 
+horizontally by sharding the key space. 
+
+<P>
+In general, <SPAN  CLASS="textit">key/value stores</SPAN> are the first choice when the data model can be expressed by key/value tuples with arbitrary values and no complex queries are required. Key/value stores not just allow easy scaling, they are also a good fit when many concurrent read and write operations are expected.   
+Some key/value stores use a volatile in-memory storage, hence they provide unmatched performance. 
+These systems represent interesting caching solutions, sometimes complemented with publish/subscribe capabilities.  
+Other durable systems provide a tunable consistency based on quorum setups.
+Key/value stores that adopt eventual consistency often accept write operations at any time, even in the face
+of network partitions. 
+As the data model resembles distributed hash tables, scaling out is generally a very easy task.   
+
+<P>
+<SPAN  CLASS="textit">Graph databases</SPAN> are a rather specific storage type, but unrivaled when it comes to graph applications.
+Lately, social network applications and location-based services have rediscovered 
+the strengths of graph databases for operations on social graphs or proximity searches.
+Graph databases often provide transaction support and ACID compliancy.
+When scaling out, the partitioning of graphs represents a non-trivial problem. 
+However, the data model of such applications often tends to be less data-heavy. 
+Existing systems also claim to handle several billion nodes, relationships and properties on a single instance using commodity hardware.   
+
+<P>
+When designing very large architectures that involve multiple data centers, <SPAN  CLASS="textit">wide column stores</SPAN>
+become the systems of choice. They support data models with wide tables and extremely sparse columns. 
+Wide column stores perform well on massive bulk write operations and on complex aggregating queries.
+In essence, they represent a good tool for data warehousing and analytical processing, but they are
+less adequate for transaction processing.
+Existing systems come in different flavors, either favoring strong or eventual consistency. 
+Wide column stores are designed for easy scaling and provide sharding capabilities.
+
+<p>
+When designing large-scale web applications, also polyglot persistence should be considered. If no database type fits all needs, different domains of the data models may be separated, effectively using different database systems. 
+
+<P>
+As an illustration, an e-commerce site has very different requirements.
+The stock of products is an indispensable asset and customers expect consistent information on product availabilities (=> relational database system).
+Customer data rarely change and previous orders do not change at all. Both types belong to a data warehouse storage, mainly for analytics (=> wide column store).  
+Tracked user actions in order to calculate recommendations can be stored asynchronously into a data warehouse for decoupled analytical processing at a later time (=> wide column store). 
+The implications for the content of a shopping cart is very different. 
+Customers expect every action to succeed, no matter if a node in the data center fails.  
+So eventual consistency is required in order to accept every single write  (e.g. add to chart) operation (=> wide column store). 
+Of course, the e-commerce application must then deal with the consequences of conflicting operations,
+by merging different versions of a chart.    
+For product ratings and comments, consistency can also be relaxed (=> document store). 
+Very similar considerations are advisable for most other large-scale web applications.

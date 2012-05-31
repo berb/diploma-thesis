@@ -1,0 +1,160 @@
+<title>3.2 Cloud Architectures</title>
+
+<meta charset="utf-8">
+
+<link rel="stylesheet" href="../style.css">
+
+<link rel="prev" href="031_tradwebarch.html"> 
+<link rel="next" href="033_archmodel.html"> 
+
+<script src="../script.js"></script>
+
+<h2 id="trad">3.2 Cloud Architectures</h2>
+
+<p>Within the last years, the increasing presence of large-scale architectures has introduced the era of Cloud Computing. </p>
+
+<h3 id="cloud">Cloud Computing</h3>
+<p>There is a huge number of different definitions available
+towards Cloud Computing. The term "cloud" itself is derived
+from the figurative abstraction of the internet represented
+as a cloud. The available definitions of Cloud Computing
+range from reductions it to be ``the next hype term"
+over pragmatic definitions focusing on special aspects to
+definitions, that see Cloud Computing as a general paradigm
+shift of information architectures, as an <SPAN  CLASS="textit">ACM CTO
+Roundtable</SPAN>&nbsp;[<A
+ HREF="0_bibliography.html#Creeger2009">Cre09</A>] has shown in 2009.
+Of the various features that are attributed to the "cloud",  scalability,
+a pay-per-use utility model and virtualization are the minimum common
+denominators.
+
+<P>
+The key concept of Cloud Computing is the resourcing
+of services. These services can be generally differentiated
+into three vertical layers:
+
+<P>
+<DL>
+<DT><STRONG>IaaS</STRONG></DT>
+<DD>The provision of virtualized hardware, in most cases as
+virtual computing instances, is termed IaaS. The particular feature of this
+form of cloud service is the ability to change these instances on demand and at
+any time. This includes spawning new computing instances, altering existing ones
+by resizing or reassigning resources or shutting down unneeded instances
+dynamically. Basic working units for IaaS are virtual images, that are
+instantiated and deployed in the cloud and executed within virtual machines.
+They contain an operating system and additional software implementing the
+application. Due to complete virtualization, the physical infrastructure of the
+data centers of IaaS providers is totally transparent to their customers.
+</DD>
+<DT><STRONG>PaaS</STRONG></DT>
+<DD>PaaS provides an additional level of abstraction by
+offering an entire runtime environment for cloud-based applications. PaaS
+typically supplies a software stack of dedicated components where applications
+can be executed on, but also tools facilitating the development process. The
+platform hides all scalability efforts from the developer, thus it appears as
+one single system to the user, although it transparently adapts to scale. 
+Most of the platforms realize this feature through elaborate monitoring and metering. 
+Once an application is uploaded onto the
+platform, the system automatically deploys it within the nodes of the data
+center of the PaaS. When the application is running under heavy load, new
+nodes will be added automatically for execution. If demand declines, spare nodes
+will be detached from the application and returned into the pool of available
+resources.
+</DD>
+<DT><STRONG>SaaS</STRONG></DT>
+<DD>SaaS provides a web-centric supply of applications. Due
+to various technological trends, web-based applications mature and become
+powerful pieces of software running entirely within the browser of the user. By
+replacing traditional desktop applications that run locally, SaaS providers
+are able to publish their applications solely in the web.  Cloud architectures
+allow them to cope with a huge number of users online. It allows users to access
+the applications on demand and they can be charged merely by usage without
+having to buy any products or licenses. This reflects the idea to consider the
+provision of software <SPAN  CLASS="textit">as a service</SPAN>.
+</DD>
+</DL>
+
+<P>
+Referring to the terminology of Cloud Computing, a scalable web application is essentially a SaaS 
+that requires appropriate execution/hosting environments (PaaS and/or IaaS). 
+
+
+<h3 id="providers">PaaS and IaaS Providers</h3>
+<p>In the following, we will consider some exemplary hosting providers and outline their service features. </p>
+
+<h4 id="aws">Amazon Web Services</h4>
+<p>Amazon was one of the first providers for dedicated, on-demand and pay-per-use <a href="http://aws.amazon.com/">web services</a>.
+It is currently dominating the multi-tenant Cloud Computing market. Their main product is <SPAN  CLASS="textit">Elastic Compute Cloud (EC2)</SPAN>, 
+a service providing different virtualized private servers. The provision of virtualized machines in
+scalable amounts forms an architectural basis for most of their clients. Instead of growing and maintaining own infrastructure, 
+EC2 clients can spin up new machine instances within seconds and thus cope with varying demand.
+This traditional IaaS hosting is complemented by a set of other scalable services that represent typical architecture components.
+
+<P>
+<SPAN  CLASS="textit">Elastic Block Storage (EBS)</SPAN> provides block-level storage volumes for EC2 instances. <SPAN  CLASS="textit">Simple Storage Service (S3)</SPAN> is a key-value
+web-based storage for files. More sophisticated data storage systems available are <SPAN  CLASS="textit">SimpleDB</SPAN>, <SPAN  CLASS="textit">DynamoDB</SPAN> 
+and <SPAN  CLASS="textit">Relational Database Service (RDS)</SPAN>. The former two services represent non-relational database management systems with a limited
+set of features. RDS currently supports MySQL-based and Oracle-based relational databases.
+
+<P>
+<SPAN  CLASS="textit">Elastic Load Balancing (ELB)</SPAN> provides load-balancing functionalities on transport protocol level (e.g. TCP) and application level (e.g. HTTP). 
+As a message queue, <SPAN  CLASS="textit">Simple Queue Service (SQS)</SPAN> can be used. For complex MapReduce-based computations, Amazon has introduced
+<SPAN  CLASS="textit">Elastic MapReduce</SPAN>.
+
+<P>
+<SPAN  CLASS="textit">ElastiCache</SPAN> is an in-memory cache system that helps speeding up web applications.
+<SPAN  CLASS="textit">CloudFront</SPAN> is a CDN, complementing S3 by replicating items geographically.  
+For monitoring purposes, Amazon has come up with <SPAN  CLASS="textit">CloudWatch</SPAN>, a central real-time monitoring web service.
+
+<P>
+Besides these services, Amazon has introduced their own PaaS stack, called <SPAN  CLASS="textit">Elastic Beanstalk</SPAN>.
+It is essentially a bundle of existing services such as EC2, S3 and ELB and allows to deploy and scale Java-based web applications. 
+Furthermore, there are additional services that cover business services such as accounting or billing. 
+
+<h4 id="gae">Google App Engine</h4>
+<p>The <a href="https://appengine.google.com/">Google App Engine</a> is a PaaS environment for web applications. It currently provides support for Python, Go and several JVM-based languages
+such as Java. Applications are hosted and executed in data centers managed by Google. One of its main features is the automatic scaling
+of the application. The deployment of the application is transparent for the user, and applications encountering high load will be automatically deployed
+to additional machines. 
+
+<P>
+Google provides free usage quotas for the App Engine, limiting traffic, bandwidth, number of internal service calls and storage size among others. 
+After exceeding these limits, users can decide to add billable resources and are thus getting charged for additional capacities.
+
+<P>
+The runtime environment of the application is sandboxed and several language features are restricted. 
+For instance, JVM-based applications cannot spawn new threads, use socket connections and access the local file system.
+Furthermore, the execution of a request must not exceed a 30 seconds limit. This restrictions are enforced by modified JVMs and altered class libraries.
+
+<P>
+Besides an application container, the App Engine provides several services and components as part of the platform. They are accessible through a set of APIs.
+We will now have a brief look at the current Java API. 
+
+<P>
+The <SPAN  CLASS="textit">Datastore API</SPAN> is the basic storage backend of the App Engine. It is schemaless object datastore, with support for querying 
+and atomic transaction execution. Developers can access the datastore using Java Data Objects,  Java Persistence API interfaces or
+via a special low-level API. A dedicated API provides support for asynchronous access to the datastore. 
+For larger objects, and especially binary resources, the App Engine provides a <SPAN  CLASS="textit">Blobstore API</SPAN>. 
+For caching purposes, the <SPAN  CLASS="textit">Memcache API</SPAN> can be used. Either using a low-level API or the JCache interface. 
+
+<P>
+The <SPAN  CLASS="textit">Capabilities API</SPAN> enables programmatical access to scheduled service downtimes and can be used to develop applications 
+that prepare for the unavailablity of capabilities automatically.
+The <SPAN  CLASS="textit">Multitenancy API</SPAN> provides support for multiple separated instances of an application running in the App Engine. 
+
+<P>
+Images can be manipulated using the dedicated <SPAN  CLASS="textit">Images API</SPAN>. The <SPAN  CLASS="textit">Mail API</SPAN> allows the application to send and receive emails.
+Similarly, the <SPAN  CLASS="textit">XMPP API</SPAN> allows message exchange based on XMPP. 
+The <SPAN  CLASS="textit">Channel API</SPAN> can be used to establish high-level channels with clients over HTTP and then push messages to them. 
+
+<P>
+The <SPAN  CLASS="textit">Remote API</SPAN> opens an App Engine application for programmable access using an external Java application.
+Other web resources can be accessed using the <SPAN  CLASS="textit">URLFetch API</SPAN>. 
+
+<P>
+Thanks to the <SPAN  CLASS="textit">Task Queue API</SPAN>, there is some support for tasks decoupled from request handling. Requests can add tasks to a queue,
+and workers asynchronously execute the background work.    
+The <SPAN  CLASS="textit">Users API</SPAN> provides several means to authenticate users, including Google Accounts and OpenID identifiers.</p>
+
+

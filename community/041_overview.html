@@ -1,0 +1,180 @@
+<title>4.1 Overview</title>
+
+<meta charset="utf-8">
+
+<link rel="stylesheet" href="../style.css">
+
+<link rel="prev" href="040_index.html"> 
+<link rel="next" href="042_serverarch.html"> 
+
+
+<script src="../script.js"></script>
+
+<h2 id="02">4.1 Overview</h2>
+
+<P>
+The main issue we address in this chapter is the appropriate mapping of connections/requests to concurrent flows of executions in a programming model. 
+As we are targeting multiple parallel HTTP requests, this mainly involves highly I/O-bound operations.
+Concerning web infrastructures, we want to make sure that our software implementation does not easily become the bottleneck and
+a high utilization of hardware resources is achieved under load on each deployed server.
+In terms of request/response and connection handling, there are several interesting metrics for describing a server's performance:
+
+<P>
+
+<UL>
+<LI>Request throughput (#/sec) 
+</LI>
+<LI>Raw data throughput (Mbps)
+</LI>
+<LI>Response times (ms) 
+</LI>
+<LI>Number of concurrent connections (#) 
+</LI>
+</UL>
+
+<P>
+Furthermore, there are the following performance statistics to be observed locally on the server's machine:
+
+<P>
+
+<UL>
+<LI>CPU utilization 
+</LI>
+<LI>Memory usage
+</LI>
+<LI>Number of open socket/file handles 
+</LI>
+<LI>Number of threads/processes 
+</LI>
+</UL>
+
+<P>
+To restate our problem, we want to handle as many requests in parallel as possible, as fast as possible and with as few resources as necessary.
+In other words, the resource utilization is to be scaling with increasing work.
+
+<h3 id="requesthandling">Request Handling Workflow</h3>
+<p>Based on the web server requirements we outlined in our previous chapter, we can list the following steps as the minimal workflow for handling a request. 
+Additional features such as request logging or caching are left out on purpose.   
+
+<OL>
+<LI><SPAN  CLASS="textit">Accept the incoming request</SPAN> - In case of a new HTTP connection, an underlying TCP connection must be established first.
+</LI>
+<LI><SPAN  CLASS="textit">Read the request</SPAN> - Reading the raw bytes from the socket (I/O-bound) and then parsing the actual HTTP request (CPU-bound) is necessary for all requests. If a request contains an entity, such as POST parameters or a file upload, this additional content must be read as well. Depending on the implementation, the web server either buffers the entity until loaded completely or pipes it directly to the application server. The former allows content offloading and is important for slow connections, the latter is interesting because of decreased latencies.    
+</LI>
+<LI><SPAN  CLASS="textit">Dispatch the request tp the application level</SPAN> - Based on our architectural model, the parsed request is then issued to the application server. We use decoupled components, so this is generally a network-based task, using messaging (or alternatives such as RPC). In case of a web server handling static content, we access a local or remote file system instead. All operations are I/O-bound.    
+</LI>
+<LI><SPAN  CLASS="textit">Write the generated response to the socket, once available</SPAN> - Once the response is generated (e.g. a generated HTML file from the application server or a static image from the file system), it can be returned to the client by writing to the socket. Again, the web server can either buffer the response and thus provide offloading for the application servers. Or it pipes the generated response directly to the client.  
+</LI>
+<LI><SPAN  CLASS="textit">Finish the request</SPAN> - Depending on the connection state negotiated via the request/response headers and the HTTP defaults, the web server either closes the connection, or it starts from the beginning and awaits the next request to be send from the client. 
+</LI>
+</OL>
+
+<h3 id="c10k">The C10K Problem</h3>
+<p>Kegel has published a seminal article&nbsp;[<A
+ HREF="0_bibliography.html#Kegel2006">Keg06</A>] in 1999 on this problem, proclaiming that "it is time for web servers to handle 
+ten thousand clients simultaneously", hence coining the term of the <SPAN  CLASS="textit">C10k problem</SPAN>. The original article was updated several times and 
+became an influential resource on web server scalability.
+
+<P>
+He motivates his considerations by showing that hardware might no longer be the bottleneck for high connection concurrency to a certain extent. 
+Based on reasonable hardware at that time (i.e. 500 MHz, 1 GB of RAM, 6 x 100Mbit/s), Kegel argues that 10.000 parallel clients are totally feasible,
+yielding 50KHz, 100Kbytes, and 60Kbits/sec per request - quite enough for 4kb of payload data. 
+In practice, most servers were far away from that number at that time. 
+He then examined web server internals and evaluated common I/O strategies and threading models in particular.    
+
+<P>
+The C10k term has been reinforced ten years later, when the the company <SPAN  CLASS="textit">Urban Airship</SPAN> <a href="http://urbanairship.com/blog/2010/08/24/c500k-in-action-at-urban-airship/">struggled</a> to serve 500.000 concurrent connections 
+on a single node. 
+Their interest in solving the <SPAN  CLASS="textit">C500k problem</SPAN> was based on their business model. Providing notification services to huge numbers of mobile devices 
+requires them to handle extraordinary high numbers of idle connections in parallel.
+
+
+<h3 id="io">I/O Operation Models</h3>
+
+For regular desktop applications, handling file-based or network-based input and output is often a sporadic task. 
+For our web servers, it is the primary task to handle I/O operations. 
+Operating systems provide different means for I/O operations, and we will now have a closer look at I/O operation models.
+
+<P>
+The terms blocking and synchronous resp. non-blocking and asynchronous are often used exchangeable in the literature and 
+both describe very similar concepts. Also, the terms are used on different levels on different operating systems with different meanings.
+We separate them at least for the description of I/O operations.   
+
+<P>
+<DL>
+<DT><STRONG>blocking vs. non-blocking</STRONG></DT>
+<DD>Using these properties, the application can tell the operating system how to access the device. When a blocking mode is used,
+the I/O operation does not return to the caller unless the operation has finished. In a non-blocking mode, all calls return immediately, but only indicate 
+the call status of the operation or the errors. Thus, multiple calls may be required to await the successful end of the operation.    
+</DD>
+<DT><STRONG>synchronous vs. asynchronous</STRONG></DT>
+<DD>These properties are used to describe the control flow during the I/O operation. A synchronous call keeps control in the sense of not returning unless the operation has finished. An asynchronous call immediately returns, allowing to execute further operations.    
+</DD>
+</DL>
+
+<P>
+Combining these modes yields four distinct operation models for I/O. Sometimes, an additional 
+software layer is used to provide a different model than the actual underlying model for convenience.  
+
+<P>
+<DL>
+<DT><STRONG>synchronous blocking I/O</STRONG></DT>
+<DD>This is the most common operational mode for many regular applications. 
+In this case, an I/O operation is a single operation, resulting in a blocked application state until the operation has completed and data has been copied from kernel space to user space (i.e. read operation). On kernel level, the actual raw operation is often multiplexed with other operations. But it represents a single, long-running operation for the application itself. 
+This model is not just a straight-forward one for developers. It also results in a time span where the application process issuing the I/O operation does not require CPU time. This is a convenient time for the operating system scheduler to switch to other processes.      
+</DD>
+<DT><STRONG>synchronous non-blocking I/O</STRONG></DT>
+<DD>In this mode, the application accesses the I/O device in a non-blocking mode. As a result, the kernel space immediately returns the I/O call. Usually, the device is not yet ready and the call response indicates that the call should be repeated later. 
+By doing this, the application code often implements a busy-wait behavior, which can be extremely inefficient. Once the I/O operations has finished and the 
+data is available in user space, the application can continue to run and use the data (in case of a read operation).    
+</DD>
+<DT><STRONG>asynchronous blocking I/O</STRONG></DT>
+<DD>Surprisingly, the asynchronous blocking model does still use a non-blocking mode for I/O operations. However, instead of a busy-wait, a dedicated blocking system call is used for notifications of the I/O state. Several system calls provide such a functionality, including select, poll, epoll and kqueue&nbsp;[<A
+ HREF="0_bibliography.html#Stevens2003">Ste03</A>].
+In so doing, multiple I/O descriptors can be passed to the system call. When the implementation of the blocking system call for notifications is sound and performant, this is good model for highly concurrent I/O.
+</DD>
+<DT><STRONG>asynchronous non-blocking I/O</STRONG></DT>
+<DD>This I/O model immediately returns from I/O calls. On completition, an event is emitted or a callback is executed. The interesting characteristics of this model is the fact there is no blocking or busy-waiting on user level. The entire operation is shifted to the kernel space. This allows the application to take advantage of additional CPU time while the I/O operations happens in the background on kernel level. 
+In other words, the application can overlap the I/O operations with additional CPU-bound operations or dispatch additional I/O operations in the meantime.
+Unsurprisingly, this model also provides good performance under highly concurrent I/O.
+</DD>
+</DL>
+
+<div class="figure" id="table/1">
+
+<table>
+
+<thead>
+
+<TR><TD></TD>
+<TD ALIGN="CENTER" COLSPAN=1><SPAN>blocking</SPAN></TD>
+<TD ALIGN="CENTER" COLSPAN=1><SPAN>non-blocking</SPAN></TD>
+</TR>
+
+</thead>
+
+<tbody>
+
+<TR><TD ALIGN="RIGHT">synchronous</TD>
+<TD ALIGN="CENTER"><TT>read/write</TT></TD>
+<TD ALIGN="CENTER"><TT>read/write</TT> using <TT>O_NONBLOCK</TT></TD>
+</TR>
+<TR><TD ALIGN="RIGHT">asynchronous</TD>
+<TD ALIGN="CENTER">I/O multiplexing</TD>
+<TD ALIGN="CENTER">AIO</TD>
+</TR>
+
+</tbody>
+
+</table>
+
+<p class="caption">Table 4.1: I/O Models in Linux</p> 
+
+</div>
+
+<P>
+These models only describe I/O operations for Linux-based operating systems on a low level. From a more abstract programmer's perspective, models can be substituted by others, often with some performance penalties. An application framework can provide I/O access using synchronous blocking via background threads, but provide an asynchronous interface for the developers using callbacks, and vice versa.  
+
+<P>
+From now on, we differentiate the synchronous blocking approach and the other three approaches in most cases. Being based on some kind of signaling, notification or callback execution, we refer to the latter as event-driven or event-based approaches.
+

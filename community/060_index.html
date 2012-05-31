@@ -1,0 +1,19 @@
+<title>6. Concurrent and Scalable Storage Backends </title>
+
+<meta charset="utf-8">
+
+<link rel="stylesheet" href="../style.css">
+
+<link rel="prev" href="057_summary.html"> 
+<link rel="next" href="061_challenge.html"> 
+
+
+<script src="../script.js"></script>
+
+<h2 id="06">6. Concurrent and Scalable Storage Backends </h2>
+
+<P>
+In the previous chatpers, we have always to evade state as much as possible. Our considerdations for web server internals are based on a shared-nothing architecture. For programming application logic, we have given the preference to reduce the usage of shared, mutuable state to the bare minimum. However, only a handful of web applications can completely disregard any kind of state. Statelessness is viable for validation or computation services, and a few other applications. For virtually all other web applications, some type of persistent state represents an essential part of the overall application. In our architectural model, we have edged away state handling to dedicated backend services. 
+
+<P>
+In this chapter, we consider the impact of concurrency and scalability to storage backends. We illustrate the challenge of guaranteeing consistency in distributed database systems and point to different consistency models. We then outline some internal concepts of distributed database systems and describe how they handle replication and partitioning. Finally, we introduce differnt types of distributed database systems and assess their features.

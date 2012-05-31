@@ -1,0 +1,42 @@
+<title>4.4 Summary</title>
+
+<meta charset="utf-8">
+
+<link rel="stylesheet" href="../style.css">
+
+<link rel="prev" href="043_threadsevents.html"> 
+<link rel="next" href="050_index.html"> 
+
+<script src="../script.js"></script>
+
+<h2 id="summary">4.4 Summary</h2>
+
+<P>
+The challenge of scalability for web servers is characterized by intense concurrency of HTTP connections.
+The massive parallelism of I/O-bound operations is thus the primary issue. 
+When multiple clients connect to a server simultaneously, server resources such as CPU time, memory and
+socket capacities must be strictly scheduled and utilized in order to maintain low response latencies 
+and high throughput at the same time.
+We have therefore examined different models for I/O operations and how to represent requests 
+in a programming model supporting concurrency.
+We have focused on various server architectures that provide different combinations of the aforementioned 
+concepts, namely multi-process servers, multi-threaded servers, event-driven servers and combined approaches
+such as SEDA.
+
+<P>
+The development of high performance servers using either threads, events, or both emerged as a viable possibility.
+However, the traditional synchronous, blocking I/O model suffers a performance setback 
+when it is used as part of massive I/O parallelism. 
+Similarly, the usage of large numbers of threads is limited by increasing performance penalties as a result of
+permanent context switching and memory consumption due to thread stack sizes.
+On the other hand, event-driven server architectures suffer from a less comprehensible and understandable
+programming style and can often not take direct advantage of true CPU parallelism.
+Combined approaches attempt to specifically circumvent inherent problems of one of the models, or they
+suggest concepts that incorporate both models.  
+
+<P>
+We have now seen that thread-based and event-driven approaches are essentially duals of each other and
+have been dividing the network server community for a long time. 
+Gaining the benefits of cooperative scheduling and asynchronous/non-blocking I/O operations 
+is among the main desires for I/O-bound server applications--however this is often overlooked 
+in a broader and conflated argument between the thread camp and the event camp.

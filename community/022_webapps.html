@@ -1,0 +1,200 @@
+<title>2.2 Web Applications</title>
+
+<meta charset="utf-8">
+
+<link rel="stylesheet" href="../style.css">
+
+<link rel="prev" href="021_www.html"> 
+<link rel="next" href="023_concurrency.html"> 
+
+<script src="../script.js"></script>
+
+<h2 id="webapp">2.2 Web Applications</h2>
+
+<p>There is a huge number of different applications available in the web. 
+In the following, we distinguish two separate types of web applications -- 
+<SPAN  CLASS="textit">web sites</SPAN> and <SPAN  CLASS="textit">web services</SPAN>. Web sites are web-based
+applications that are designed for humans and browser-based access.
+By contrast, web services are web-based interfaces for machine-to-machine
+communication. Although this distinction is rather arbitrary, it will help us to
+identify different requirements and features. </p>
+
+<h3 id="sites">Web Sites</h3>
+
+<p>Web sites have evolved from hyper-referenced, text-based research documents to
+highly interactive, social and collaborative applications for many different
+purposes. Web content has become increasingly dynamic and based on content
+provided by the users. Web technologies such as JS, AJAX, and
+HTML5 have introduced more interactive user interfaces and boosted this
+transition.
+Thanks to powerful APIs provided by modern browsers, web applications are already
+starting to replace traditional desktop applications and native mobile applications.</p>
+<p>We will now introduce some popular types for web sites that are interesting in terms of scalability and concurrency.</p>
+
+<h4 id="sn">Example: Social Network Sites</h4>
+
+<p>Social networks are sites that transfer social interactions to the web. They often try to reflect real world social relations of its users (e.g. <a href="http://www.facebook.com/">Facebook</a>) or focus on specific topics (e.g. <a href="http://www.dopplr.com/">dopplr</a> for travelling). 
+Social network sites motivate their users to interact, for instance via instant messaging. Also, social networks heavily rely on user generated content and context-specific data, such as geo-tagged content. User content and actions are often published into activity streams providing a "real-time" feed of updates that can be watched live by other users.</p>
+
+
+<h4 id="collab">Example: Collaborative Web Applications</h4>
+<p>
+These web applications allow a group of people to collaborate via the web. Traditional examples are wiki systems, where users can collectively edit versions of text documents. More recent collaborative applications incorporate soft real-time aspects. For example, <a href="http://etherpad.org/">Etherpad</a> is a web-based word processor that supports multiple users working on the same document concurrently. </p>
+
+<h4 id="ecom">Example: E-Commerce Sites</h4>
+<p>
+E-Commerce sites such as <a href="http://www.amazon.com">Amazon</a> are traditional commercial sites in the web selling products online.
+Interestingly enough, many sites have adopted features known from social sites for business purposes. 
+By commenting, rating and tagging products, users can participate on these sites beyond just buying items.
+User-generated content is then used to cluster product items and compute accurate recommendations. 
+Thus, commercial sites face similar challenges to social sites to some extend. </p>
+
+
+<h3 id="ws">Web Services</h3>
+<p>
+Web services provide access to application services using HTTP.
+Thus, web services often resemble traditional mechanisms for distributed computing
+such as RPC or message passing, though based on web technologies.</p>
+
+<p>
+Opposed to web sites, web services are not targeting direct (human) user access in a first place. Instead, web services enable machine-to-machine communication
+and provide application features via an interface and structured messages. 
+Several web applications provide both, a web site and a web service interface (API). While the web site is used for browser-based access,
+the web service can be used for custom applications such as mobile client applications or scripted program-based service interactions.</p>
+
+<h4 id="xmlrpc">XML-RPC</h4>
+<p>XML-RPC has been one of the first attempts to transfer traditional RPC-based
+services to the web. It makes use of HTTP POST requests for dispatching
+procedure calls and an XML-based serialization format for call parameters and
+return values. The following listing provides an example taken from
+the original specification&nbsp;[<A
+ HREF="0_bibliography.html#Winer1999">Win99</A>]:</p>
+
+<p><pre>
+POST /RPC2 HTTP/1.0
+User-Agent: Frontier/5.1.2 (WinNT)
+Host: betty.userland.com
+Content-Type: text/xml
+Content-Length: 181
+
+&lt;?xml version=&quot;1.0&quot;?&gt; &lt;methodCall&gt; &lt;methodName&gt;examples.getStateName&lt;/methodName&gt; &lt;params&gt; &lt;param&gt; &lt;value&gt;&lt;i4&gt;41&lt;/i4&gt;&lt;/value&gt; &lt;/param&gt; &lt;/params&gt; &lt;/methodCall&gt;
+
+HTTP/1.1 200 OK
+Connection: close
+Content-Length: 158
+Content-Type: text/xml
+Date: Fri, 17 Jul 1998 19:55:08 GMT
+Server: UserLand Frontier/5.1.2-WinNT
+
+&lt;?xml version=&quot;1.0&quot;?&gt; &lt;methodResponse&gt; &lt;params&gt; &lt;param&gt; &lt;value&gt;&lt;string&gt;South Dakota&lt;/string&gt;&lt;/value&gt; &lt;/param&gt; &lt;/params&gt; &lt;/methodResponse&gt;</pre></p>
+
+<p>
+It is important to clarify that XML-RPC is using HTTP as a
+generic transport protocol for RPC calls. It does not take advantage
+of any HTTP features such as caching, status codes for error handling or header
+fields for negotiation. </p>
+
+<h4 id="soap">SOAP, WSDL and WS-*</h4>
+<p>
+The stack of SOAP&nbsp;[<A
+ HREF="0_bibliography.html#Gudgin2007">Gud07</A>], WSDL&nbsp;[<A
+ HREF="0_bibliography.html#Liu2007">Liu07</A>], UDDI&nbsp;[<A
+ HREF="0_bibliography.html#Clement2004">Cle04</A>] and
+a myriad of additional extensions (WS-*) forms a more
+comprehensive approach for machine-to-machine communication, mostly based on web
+technologies. It is widely used and particularly popular in enterprise
+environments.
+As previously mentioned, SOAP is a successor of XML-RPC. It specifies the
+format, call semantics and exchange patterns of XML-encoded messages between
+parties.
+Various extension specifications, often labeled as <TT>WS-*</TT>, address
+additional features of SOAP-based web services such as security or
+orchestration.
+The WSDL is another important specification for this kind of web services.
+It provides XML-based, machine-readable service descriptions, comparable to
+interface definition languages of traditional RPC protocols.
+UDDI was originally a third component providing registry functions for web
+services, but it has almost entirely lost its significance in practice.</p>
+
+<p>
+Although the SOAP/WSDL stack is generally known as <SPAN  CLASS="textit">web</SPAN> service stack, it
+dismisses parts of the original idea of the web. For instance, the stack uses
+HTTP as a pure communication protocol for exchanging messages, that can be
+replaced by other protocols. Similarly to XML-RPC, this web service stack does
+not use HTTP as an application-level protocol.</p>
+
+<h4 id="rest">Representational State Transfer</h4>
+<p>REST is an architectural style that embraces the fundamentals of the
+WWW. It has been introduced as part of the doctoral
+thesis of Roy T. Fielding&nbsp;[<A
+ HREF="0_bibliography.html#Fielding2000">Fie00</A>], who was also responsible for the
+HTTP specifications to some extent.
+Not surprisingly, the REST style takes full advantage of HTTP
+features. Fielding suggests a resource-oriented architecture that is defined
+by a set of constraints:</p>
+
+<DL>
+<DT><STRONG>Client-server</STRONG></DT>
+<DD>The client-server style is motivated by a separation of
+  concerns. It promotes to separate user interfaces and data storage of the
+  system. It also simplifies dedicated component design and allows an independent
+  evolution of client and server components.
+  
+</DD>
+<DT><STRONG>Statelessness</STRONG></DT>
+<DD>Statelessness promotes scalability and reliability. It
+  also makes the server-side development easier.
+  
+</DD>
+<DT><STRONG>Cache</STRONG></DT>
+<DD>Optional non-shared caching is a constraint that helps to reduce
+  latency and improves scalability and efficiency.
+  
+</DD>
+<DT><STRONG>Layered System</STRONG></DT>
+<DD>Using a layered system enables a set of interesting
+  architectural extensions such as legacy encapsulation, load balancing and
+  (shared) caching.
+  
+</DD>
+<DT><STRONG>Code-on-Demand</STRONG></DT>
+<DD>This optional constraint provides extensibility by
+  simplifying client updates.  
+  
+</DD>
+<DT><STRONG>Uniform Interface</STRONG></DT>
+<DD>The uniform interface is the most important
+  constraint of the REST style and determines the resources as central
+  entities that can be operated on using a fixed set of verbs (the HTTP
+  methods).
+  This constraint can be divided into four sub-constraints:
+  
+  
+<UL>
+<LI><SPAN  CLASS="textit">Identification of resources</SPAN> is accomplished by the usage of
+    URI inside a RESTful web service.
+</LI>
+<LI><SPAN  CLASS="textit">Manipulation via representations</SPAN> promotes the change of
+    resources through the submission of altered representations by the client.
+</LI>
+<LI><SPAN  CLASS="textit">Self-descriptive messages</SPAN> provide enough information so that
+    they can be processed without further external knowledge.
+</LI>
+<LI>Most importantly, <SPAN  CLASS="textit">hypermedia as the engine of application
+    state</SPAN> promotes the usage of hypermedia inside the representations. State
+    transitions are triggered by accessing resources through their uniform
+    interface and by following hyperlinks inside their representations.
+  
+</LI>
+</UL>
+
+<P>
+</DD>
+</DL>
+
+<p>The broad interest in REST and its recent popularity 
+is not the only reason it is listed here. The conceptual ideas behind REST
+are taken from HTTP and based on the lessons learned from the
+WWW. The ideas promote loose coupling, stateless communication, reusability and
+interoperability. Thus, they establish a great basis for scalability of
+architectures that are complying with the REST style.</p>

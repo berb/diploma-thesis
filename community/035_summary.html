@@ -1,0 +1,45 @@
+<title>3.5 Summary</title>
+
+<meta charset="utf-8">
+
+<link rel="stylesheet" href="../style.css">
+
+<link rel="prev" href="034_scaleweb.html"> 
+<link rel="next" href="040_index.html"> 
+
+<script src="../script.js"></script>
+
+<h2 id="summary">3.5 Summary</h2>
+
+<P>
+We have seen that delivering dynamic content represents a different challenge than serving static files.
+Techniques like CGI, FastCGI and dedicated web server modules have evolved to integrate dynamic content,
+and scripting languages are very popular in this context. 
+Alternatively, containers that host dynamic web applications can be used for deployment, which is the
+preferred way for Java-based applications.
+A tiered view on web architectures not merely helps to split up deployment-specific 
+components. It can also provide a logical separation of concerns by layering
+presentation, application logic and persistence.
+We also learned that load balancing is a fundamental concept for scalability in web architectures,
+as it enables the distribution of load to multiple servers.
+
+<P>
+We then introduced the general principles of Cloud Computing, the resourcing of services with 
+a pay-per-use utility model and on demand, using virtualization techniques. 
+Being geared towards seamless scalability,
+Cloud Computing platforms and infrastructures relate well
+to our endeavor of scalable web architectures. 
+
+<P>
+Based on similar components from existing Cloud services, we have introduced an architectural model 
+for scalabale web infrastructures. Instead of a single, monolithic architecture, our model adheres to
+a set of dedicated service components with loose coupling. The separation allows us to 
+scale different service components using appropriate scaling strategies and makes the overall
+architecture more robust, reliable and agile. The isolation of web servers, applications servers and backend
+storage systems also enables us to benefit from a more precise view on concurrency challenges inside each
+component type.
+
+<P>
+Other attempts at improving performance and scalability have been mentioned, 
+aiming at optimized communication, better content delivery and faster web sites. 
+However, they are not part of further considerations in the subsequent chapters. 

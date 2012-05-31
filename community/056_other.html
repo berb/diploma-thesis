@@ -1,0 +1,97 @@
+<title>5.6 Other Approaches and Concurrency Primitives</title>
+
+<meta charset="utf-8">
+
+<link rel="stylesheet" href="../style.css">
+
+<link rel="prev" href="055_events.html"> 
+<link rel="next" href="057_summary.html"> 
+
+
+<script src="../script.js"></script>
+
+<h2 id="02">5.6 Other Approaches and Concurrency Primitives</h2>
+
+<p>We have now seen four common concurrency concepts that can be used for programming concurrent application logic. However, there are still other concurrency concepts and language primitives for concurrent programming. We will now introduce the more interesting ones briefly. We give hints how they relate to the former concepts and how they can be used in practice. </p>
+
+<h3 id="futures">Futures, Promises and Asynchronous Tasks</h3>
+<p>Promises&nbsp;[<A
+ HREF="0_bibliography.html#Friedman1976">Fri76</A>,<A
+ HREF="0_bibliography.html#Liskov1988">Lis88</A>] and futures&nbsp;[<A
+ HREF="0_bibliography.html#Baker1977">Bak77</A>] generally describe the same idea of decoupling a computation and its eventual result by providing a proxy entity that returns the result, once available. In concurrent programming, promises and futures are often used for asynchronous background tasks.
+Once a task is dispatched, the proxy entity is returned and the caller's flow of execution can continue, decoupled from the new computation. The proxy entity can later be queried to return the result of the decoupled computation.
+If the result is not yet available, the proxy entity either blocks or provides a notification, when non-blocking.
+
+<P>
+Promises and futures also introduce a synchronization mechanism, as they allow to dispatch independent computations, but synchronize with the initial flow of control, once the result is requested and eventually returned.  
+Futures and promises are available in many programming languages using threads for concurrency. In this case, the execution of the background task is scheduled to another thread, allowing the initial thread to continue its execution.
+Actor-based systems often use an actor as a proxy entity of a computation, which is essentially the same as a future&nbsp;[<A
+ HREF="0_bibliography.html#Hewitt1973">Hew73</A>]. Sending a message to another actor and awaiting its eventual response is also often abstracted using futures. 
+In event-driven systems, eventual results are represented by events, and handled by associated callbacks.
+
+<P>
+When programming web applications, promises or futures can be used to decrease latency. The scatter-gather pattern dispatches multiple independent operations (scatter) and waits for all operations to yield results (gather). For instance, multiple independent database queries can be parallelized using this pattern.
+This can be implemented by scattering all operations as background tasks yielding proxy entities, then gathering all results by accessing the proxy entities. In effect, this converts a sequence of operations into parallel execution of operations. 
+Dataflow programming provides a similar execution strategy, but hides the notion of futures in the implementation. 
+
+
+
+<h3 id="coroutines">Coroutines, Fibers and Green Threads</h3>
+<p>Coroutines&nbsp;[<A
+ HREF="0_bibliography.html#Conway1963">Con63</A>], and similarly fibers and green threads, are a generalization of subroutines. 
+While a subroutine is executed sequentially and straightly, a coroutine can suspend and resume its execution at distinct points in code. Thus, coroutines are good primitives for cooperative task handling,
+as coroutines are able to yield execution. We have identified the advantages of cooperative task handling in <a href="index.html#chapter/4">chapter 4</a>, especially in case of massive parallelism of asynchronous operations such as I/O. 
+
+<P>
+Coroutines are often used as low-level primitives, namely as an alternative to threads for implementing high-level concurrency concepts. For example, actor-based systems and event-driven platforms may use coroutines for their underlying implementation.
+
+<P>
+There are also several programming languages and language extensions that introduce coroutines or their variants to high-level programming languages. 
+For instance, <a href="http://codespeak.net/py/0.9.2/greenlet.html">greenlet</a> 
+is a coroutine framework for Python, that is heavily used by high performance event loop frameworks such as <a href="http://www.gevent.org/">gevent</a>.
+
+<P>
+<a href="http://golang.org/">Google Go</a> is a general-purpose programming language from Google that
+supports garbage collection and synchronous message passing for concurrency (see below). Go targets usage scenarios similar to C/C++ by tendency. It does not supply threads for concurrent flows of executions, but a primitive called goroutine, which is derived from coroutines. Goroutines are functions that are executed in parallel with their caller and other running goroutines. The runtime system maps goroutines to a number of underlying threads, which might lead to truely parallel execution. In other circumstances, multiple goroutines might also be executed by a single thread using cooperative scheduling.
+Hence, they are more powerful than conventional coroutines, as they imply parallel execution and communicate via
+synchronous message passing, and not just by yielding.
+
+
+<h3 id="smp">Channels and Synchronous Message Passing</h3>
+<p>Message passing is a theoretical model for concurrent systems that became well-known thanks to Hoare's CSP&nbsp;[<A
+ HREF="0_bibliography.html#Hoare1978">Hoa78</A>]. It is also the theoretical foundation for concurrent programming concepts.
+
+<P>
+There are two different flavors of message passing--synchronous and asynchronous. We have already got to know the latter one, because the actor model is essentially built on asynchronous message passing between actors.
+Asynchronous message passing decouples communication between entities and allows senders to send messages without waiting for their receivers. In particular, there is no synchronization necessary between senders and receivers for message exchange and both entities can run independently. On the other hand, the sender can not know when a message is actually received and handled by the recipient. 
+
+<P>
+The other variant, synchronous message passing, uses explicit message exchanging. Both the sender and receiver have to be ready and block while the message is getting exchanged. As a consequence, synchronous message passing yields a form of synchronization, because message exchanges are explicit synchronization points for different flows of control.  
+
+<P>
+There are several other differences between both models. In asynchronous message passing models, the communicating entities have identities, while their synchronous counterparts are anonymous.
+Synchronous messaging uses explicit, named channels for communication between entities, while asynchronous messaging does not have intermediaries.  
+
+<P>
+Google Go makes heavy use of synchronous message passing for concurrent programming, very similar to the way pipes are used in Unix (also synchronous). 
+Channels are first-level languages primitives that are used for data exchange between goroutines.
+As goroutines can be scheduled to multiple threads and might actually run in parallel, channels are also the main synchronization primitive assuring that multiple goroutines meet in a mutually known state.    
+
+
+<h3 id="dataflow">Dataflow Programming</h3>
+<p>Dataflow programming with declarative concurrency is a very elegant, yet rather uncommon approach to tackle concurrency. 
+Imperative programming is based on the idea of describing a sequence of explicit operations to execute.   
+Instead, dataflow programming defines the relations between necessary operations, yielding an implicit graph of dependencies, the flows of execution.   
+This allows the runtime systems to automatically identify independent steps of operations and parallelize them at runtime. Coordination and synchronization are hidden in the runtime system, often by using channels in order to wait for multiple input data and then initiate the next steps of computation.
+Although this programming concept allows true parallelism, coordination and synchronization efforts are hidden due to the declarative style.  
+
+<P>
+Mozart/Oz&nbsp;[<A
+ HREF="0_bibliography.html#Roy2004">Roy04</A>] is a programming language that supports multiple paradigms and has strong support for dataflow programming with declarative concurrency. 
+<a href="http://gpars.codehaus.org/">GPars</a> is a Java concurrency library that also supplies a rich set of  dataflow concurrency primitives. 
+
+<P>
+Dataflow programming is also interesting for web application development.
+Application-level request handling can be defined as a flow of operations.
+Thanks to the implicit parallelization, independent operations are then executed in parallel and later synchronized without any locking. Hence, this style helps to decrease latencies.    
+

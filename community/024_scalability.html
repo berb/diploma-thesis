@@ -1,0 +1,130 @@
+<title>2.4 Scalability</title>
+
+<meta charset="utf-8">
+
+<link rel="stylesheet" href="../style.css">
+
+<link rel="prev" href="023_concurrency.html"> 
+
+<link rel="next" href="025_summary.html"> 
+
+<script src="../script.js"></script>
+
+<h2 id="www">2.4 Scalability</h2>
+
+<p>Scalability is a non-functional property of a system that describes the ability
+to appropriately handle increasing (and decreasing) workloads.
+According to Coulouris et al.&nbsp;[<A
+ HREF="0_bibliography.html#Dollimore2005">Dol05</A>], "a system is described as
+scalable, if it will remain effective when there is a significant increase in
+the number of resources and the number of users". Sometimes, scalability is a
+requirement that necessitates the usage of a distributed system in the first place.
+Also, scalability is not to be confused with raw speed or performance. Scalability
+competes with and complements other non-functional requirements such as availability,
+reliability and performance.  </p>
+
+<h3 id="axis">Horizontal and Vertical Scalability</h3>
+<p>There are two basic strategies for scaling--vertical and horizontal.
+In case of vertical scaling, additional resources are added to a single node. 
+As a result, the node can then handle more work and provides
+additional capacities. Additional resources include more or faster CPUs, more
+memory or in case of virtualized instances, more physical shares of the
+underlying machine. In contrast, horizontal scaling adds more nodes to the
+overall system. 
+
+<P>
+Both scaling variants have different impacts on the system. Vertical scaling
+almost directly speeds up the system and rarely needs special
+application customizations. However, vertical scaling is obviously limited by
+factors such as cost effectiveness, physical constraints and availability of
+specialized hardware.
+Horizontal scaling again requires some kind of inherent distribution within the
+system. If the system cannot be extended to multiple machines, it could not
+benefit from this type of scaling. But if the system does support horizontal
+scaling, it can be theoretically enlarged to thousands of machines. This is
+the reason why horizontal scaling is important for large-scale architectures.
+Here, it is common practice to focus on horizontal scaling by deploying lots of commodity systems. 
+Also, relying on low cost machines and anticipating failure is often more economical
+than high expenses for specialized hardware.   
+
+<P>
+Considering a web server, we can apply both scaling mechanisms. The allocation
+of more available system resources to the web server process improves its
+capacities. Also, new hardware can provide speed ups under heavy load.
+Following the horizontal approach, we setup additional web servers and
+distribute incoming requests to one of the servers.</p>
+
+<h3 id="req">Scalability and other Non-functional Requirements</h3>
+<p>In software engineering, there are several important non-functional requirements for large software architectures.
+We will consider operational (runtime) requirements related to scalability: high availability, reliability and performance.
+A system is available, when it is capable of providing its intended service. <SPAN  CLASS="textit">High availability</SPAN> is a requirement that aims at
+the indentured availability of a system during a certain period. It is often denoted as percentiles of uptime, restricting the 
+maximum time to be unavailable. 
+
+<P>
+<SPAN  CLASS="textit">Reliability</SPAN> is a closely related requirement that describes the time span of operational behavior,
+often measured as meantime between failures. 
+Scalability, anticipating increasing load of a system, challenges both requirements. A potential overload of the systems due to 
+limited scalability harms availability and reliability. 
+The essential technique for ensuring availability and reliability is redundancy and the
+overprovisioning of resources. From a methodical viewpoint, this is very similar to horizontal scaling. However, it is important not 
+to conflate scalability and availability. Spare resources allocated for availability and failover can not be used for achieving scalability 
+at the same time. Otherwise, only one requirement can be guaranteed at once.        
+
+<P>
+<SPAN  CLASS="textit">Performance</SPAN> of software architectures can have multiple dimensions such as short response times (low latencies) and high throughput 
+along with low utilization. Again, increasing load of an application may affect the requirement negatively. Unless an application is
+designed with scalability in mind and there are valid scaling options available, performance may degrade significantly under load.   
+
+<P>
+Note that in most web architecture scenarios, all of the requirements mentioned are desirable. However, especially when resources are limited, 
+there must be some kind of trade-off favoring some of the requirements, neglecting others.  </p>
+
+<h3 id="con">Scalability and Concurrency</h3>
+<p>
+The relation between scalability and concurrency is twofold. From one perspective, concurrency
+is a feature that can make an application scalable. Increasing load is opposed to increasing concurrency
+and parallelism inside the application. Thanks to concurrency, the application stays operational and utilizes 
+the underlying hardware to its full extent. That is, above all, scaling the execution of the application among
+multiple available CPUs/cores. 
+
+<P>
+Although it is important to differentiate between increased performance and scalability, we can apply some rules
+to point out the positive impacts of parallelism for scalability. Certain problems can be solved faster when more
+resources are available. By speeding up tasks, we are able to conduct more work at the same time. This is especially
+effective when the work is composed of small, independent tasks.
+
+<P>
+We will now have a look at a basic law that describes the speed-up of parallel executions.  
+Amdahl's law&nbsp;[<A
+ HREF="0_bibliography.html#Goetz2006">Goe06</A>], as seen in <a href="#equation/1">equation 2.1</a>, describes the maximum improvement of a system to expect when resources are added
+to a system under the assumption of parallel execution. A key point hereof is the ratio of serial and parallel subtasks. 
+<SPAN CLASS="MATH">N</SPAN> is the number of processors (or cores) available, and <SPAN CLASS="MATH">F</SPAN> denotes the fraction of calculations to be executed serially.     
+
+<div class="figure" id="equation/1">
+
+<img src="resources/speedup.png" alt="speedup &le; (1/(F + ((1-F)/N) ))" title="speedup &le; (1/(F + ((1-F)/N) ))">
+
+<p class="caption">(2.1)</p>
+</div>
+
+
+<P>
+Note that in case of a web server, parallelizable tasks are predominant. However, highly interactive and collaborative 
+web applications require increasing coordination between requests, weakening the isolated parallelism of requests.  
+
+<P>
+From a different angle, concurrency mechanisms themselves have some kind of scalability property. That is basically the 
+ability to support increasing numbers of concurrent activities or flows of execution inside the concurrency model. In practice, 
+this involves the language idioms representing flows of executions and corresponding mappings to underlying concepts such as threads. 
+For our considerations, it is also interesting to relate incoming HTTP requests to such activities. Or more precisely, how we allocate
+requests to language primitives for concurrency and what this implies for the scalability of the web application under heavy load.   
+
+
+<h3 id="webapp">Scalability of Web Applications and Architectures</h3>
+<p>It is the main scalability challenge of web applications and architectures to gracefully handle growth. 
+This includes growth of request numbers, traffic and data stored. In general, increasing load is a deliberate objective that testifies 
+increasing usage of the application. From an architectural point of view, we thus need so-called <SPAN  CLASS="textit">load scalability</SPAN>.
+That is the ability to adapt its resources to varying loads. A scalable web architecture should also be designed in a way 
+that allows easy modification and upgrade/downgrade of components.</p>
+

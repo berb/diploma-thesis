@@ -1,0 +1,152 @@
+<title>3.1 Traditional Web Architectures</title>
+
+<meta charset="utf-8">
+
+<link rel="stylesheet" href="../style.css">
+
+<link rel="prev" href="030_index.html"> 
+<link rel="next" href="032_cloudarch.html"> 
+
+<script src="../script.js"></script>
+
+<h2 id="trad">3.1 Traditional Web Architectures</h2>
+
+<p>Although current web architectures use almost the same application protocol as first web servers did, their internals have changed considerably. Especially the rise of dynamic web content has had a reasonable impact on architectural concepts. As the web has been growing, tiered architectures appeared that separate different responsibilities of architectural components. Growing architectures also demanded for ways of scaling web applications, and load-balancing has established itself as a decent mechanism. We now have a look at the integration of dynamic content into web applications and consequences for servers by giving an overview of different technologies. Then we examine the concept of tiered architectures and load-balancing. </p>
+
+<h3 id="dynamic">Server-Side Technologies for Dynamic Web Content</h3>
+<p>In the early 90s, the first web servers were network servers that provided access solely to static files via HTTP. Within a short time, there was an increasing demand in more dynamic contents. For instance, enriching static HTML files with mutable server state, generating complete HTML files on-the-fly or dynamically responding to form submissions was requested to improve the user experience. One way to do this was altering the web servers and including mechanisms for dynamic content creation deep inside the code of web servers. Of course, this was a cumbersome approach and conflated web server internals and web application programming. As a result, more general solutions were needed and soon emerged, as for instance CGI.</p>
+
+<h4 id="cgi">Common Gateway Interface</h4>
+<p>The Common Gateway Interface
+(CGI)&nbsp;[<A
+ HREF="0_bibliography.html#RFC3875">Rob04</A>] is a standardized interface for delegating web requests to external applications that handle the request and  generate a response.
+CGI can be used when the interface is supported by both the web server and the external application. In practice, most of these applications
+are implemented using scripting languages. For each incoming request against a URI mapped to a CGI application, the web server spawns a new process.
+This process executes the CGI application and provides specific variables such as request headers and server variables via environment variables.
+Request entities can be read by the CGI process via <TT>STDIN</TT>, and the the generated response (both headers and the response entity) 
+are written to <TT>STDOUT</TT>. After generating the response, the CGI process terminates. 
+Only using external processes and communication via environment variables, <TT>STDIN</TT> and <TT>STDOUT</TT> provides a simple interface. It allows
+any application to handle and generate web content when supporting these basic mechanisms.
+Especially Perl and other scripting languages such as PHP have been used later extensively to build web applications based on CGI.
+These languages can be directly embedded into existing HTML markup, and the code added is executed on each request.
+Alternatively, they provide ways to generate HTML documents, often using template engines. 
+
+<P>
+However, the CGI model has several problems, in particular scalability and performance.
+As we have seen previously, processes are heavyweight structures for tasks. 
+They require reasonable overhead and resources for creation. 
+Thus, mapping each dynamic request to a new process to be spawned is a very costly operation. It not just increases the latency 
+due to process creation, it also wastes server resources due to the spawning overhead and limits the number of concurrent request that can be handled.
+Given the fact that most CGI applications are script files that have to be interpreted on each execution, average latencies deteriorate even more.    
+The communication via <TT>STDIN</TT>/<TT>STDOUT</TT> offers another severe problem. This way of communication between processes limits the
+distributability of components, since both processes must be located on the same machine. There is no way of decoupling both components in a distributed way
+when using CGI.
+
+<h4 id="fastcgi">FastCGI</h4>
+<p>FastCGI mitigates the main issues of CGI by specifying an interface protocol to be used via local sockets or TCP connections. 
+Thus, web servers and applications generating the responses are decoupled and can be located on different machines. 
+Making no restrictions on the concurrency model, the backend application can be implemented as a long-running process with internal multithreading.
+In effect, the overhead of per-request process creation is gone and the concurrency can be increased by a great extent.</p>
+
+<h4 id="ext">Web Server Extension Modules</h4>
+<p>Another alternative to CGI are server extension modules. Instead of external interfaces, internal module interfaces of the web server are provided that allow to plug in modules. These modules are regularly used to embed interpreters for scripting languages into the server context. In particular, the concurrency model of the server is often applied to the script execution. As a result, request handling and dynamic content generation can be executed within the same thread or process. The tight integration into the server can improve performance and generally provides better speed results than CGI-based scripts. However, this model again prevents loose coupling and makes the separation of web server and backend application more difficult.</p>
+
+<h4 id="container">Web Application Containers</h4>
+<p>The original CGI model was not appropriate for some languages such as Java. The dedicated process-per-request model and the startup times of the JVM 
+made it completely unusable. As a result, alternative approaches emerged, such as the Java Servlet specification.
+This standard specifies a container, that hosts and executes web applications and dispatches incoming requests to a pool of threads and corresponding objects for request handling. 
+Special classes (<TT>javax.servlet.Servlet</TT>) are used that provide protocol-specific methods. 
+The <TT>HttpServlet</TT> class provides methods such as <TT>doGet</TT> or <TT>doPost</TT> to encapsulate HTTP methods.
+JSP provide an alternative syntax and allows to inline code into HTML files. On startup, these files are then converted into regular Servlet
+classes automatically.  
+The internal multithreading provides better performance and scalability results than CGI, 
+and web application containers and web servers can also be decoupled. 
+In this case, a connecting protocol like Apache JServ Protocol&nbsp;[<A
+ HREF="0_bibliography.html#Shachor2000">Sha00</A>] is needed.</p>
+ 
+<h3 id="tiered">Tiered Architectures</h3>
+<p>Patterns for remotely accessible, interactive applications and a separation of concerns such as the model-view-controller or the presentation-abstraction-control pattern have been developed a long time before the web has emerged. An important architectural pattern for web in this regard is the concept of a multi-tier architecture&nbsp;[<A
+ HREF="0_bibliography.html#Fowler2002">Fow02</A>]. It describes the separation of different components or component groups as part of a client-server architecture. This separation is often twofold--it either describes a logical decomposition of an application and its functionality. Or it describes a rather technical split of deployment components. There are also different granularities of this separation. Nominating tiers for dedicated purposes (e.g. business process management) or further breaking down tiers (e.g. splitting data access and data storage) yields additional tiers. We will now have a look at the most common separation of web architectures, a logical separation of concerns into three distinct tiers.
+
+<P>
+<DL>
+<DT><STRONG>Presentation tier</STRONG></DT>
+<DD>The presentation tier is responsible for displaying information. In terms of a web application, this can be done either by a graphical user interface based on HTML (web sites), or by providing structured data representations (web services).
+	
+</DD>
+<DT><STRONG>Application logic tier</STRONG></DT>
+<DD>This tier handles the application logic by processing queries originated from the presentation tier and providing appropriate (data) responses. Therefore, the persistence tier is accessed. The application tier encapsulates business logic and data-centric functionalities of the application.
+	
+</DD>
+<DT><STRONG>Persistence tier</STRONG></DT>
+<DD>The last tier is used for storing and retrieving application data. The storage is usually persistent and durable, i.e. a database. 
+</DD>
+</DL>
+
+<P>
+When mapping these logical tiers to application components, there are often a number of different possibilities. Traditional web applications allocate all tiers to the server side, expect for the rendering of HTML pages that takes place in the browser. This resembles a traditional thin client architecture. Modern browser technologies such as the Web Storage API or IndexedDB now allow applications to be located entirely within the client side, at least during offline usage. This temporarily pushes all conceptual tiers into the browser and resembles a fat client. 
+For the most part of current web applications, tiers are balanced and presentation is mainly a task of the browser. Modern web applications often try to provide as much functionalities as possible on client side for better user experience, and rely on server-side functions in case of missing browser support. This is known as <SPAN  CLASS="textit"><a href="http://accessites.org/site/2007/02/graceful-degradation-progressive-enhancement/">graceful degradation</a></SPAN>, a term borrowed from fault-tolerant system design&nbsp;[<A
+ HREF="0_bibliography.html#Randell1978">Ran78</A>]. To some extent, application logic is also available on client side, but most functionality is on the server. Sometimes, features are also provided redundantly. This is especially important for security-critical tasks such as input validation. Persistence is assigned to the server side with a few exceptions such as temporarily offline usage.
+
+<P>
+Focusing on the server-side architecture, the tiers provide a basic set of components. Components for the presentation, application and persistence tier can be placed on a single machine, or deployed to dedicated nodes. We will elaborate a more detailed architectural model based on components later in this chapter.
+
+
+<h3 id="lb">Load-Balancing</h3>
+<p>The limitations of vertical scaling force us to deploy multiple web servers at a certain scale. We thus need a mechanism of balancing workload from incoming requests to multiple available servers. As a result, we want an effective resource utilization of all servers (this is the primary target of load-balancing, and not high availability as we have seen in chapter 2). Handling a request is a rather short-living task, but the huge number of parallel requests makes the appropriate allocation and distribution of requests to servers a decent challenge. Several strategies have been developed to address this, as we will see soon. 
+When implementing a load-balancing solution, another decision concerns the technical implementation level
+of connection forwarding&nbsp;[<A
+ HREF="0_bibliography.html#Schlossnagle2006">Sch06</A>].
+ 
+<h4 id="lblevel">Network-level vs. Application-level Balancing</h4>
+<p>In HTTP, web servers are distinguished by hostname and port. Hostnames are resolved to IP addresses using the DNS protocol. However, a single IP address cannot be assigned to multiple online hosts at the same time. A first way of mapping a single hostname to multiple servers is a DNS entry that contains multiple IP addresses and keeps a rotating list. In practice, this is a naive load-balancing approach, as DNS has several unwanted characteristics such as the difficult removal of a crashed server or the long dissemination times for updates. Frequently changing hostname-to-IP resolutions interferes with secured connections via SSL/TLS. While DNS-based balancing can help to some extent (e.g. balancing between multiple load-balancers), we generally need more robust and sophisticated mechanisms. With reference to the ISO/OSI model, both the application layer and lower-level layers are reasonable approaches.  </p>
+
+<h5 id="networklayer">Layer 2/3/4</h5>
+<p>Load balancers operating on layer 3/4 are either <SPAN  CLASS="textit">web switches</SPAN>--dedicated, proprietary network appliances ("black-boxes")--or <SPAN  CLASS="textit">IP virtual servers</SPAN> operating on commodity server hardware. Their functionality resembles a reverse NAT mapping or routing. Instead of mapping Internet access for multiple private nodes via a single IP, they provide a single externally accessible IP mapped to a bunch of private servers. Layer 2 balancers use link aggregations and merge multiple servers to a single logical link. All these approaches use mechanisms such as transparent header modifications, tunneling, switching or routing, but on different layers. 
+Dedicated network appliances can provide impressive performances in terms of throughput, alas with a heavy price tag. Solutions based on <SPAN  CLASS="textit">IP virtual servers</SPAN> running on regular hardware often provide a more affordable solution with reasonable performance up to a certain scale.</p>
+
+<h5 id="layer7">Layer 7</h5>
+<p>Load balancers operating on the application layer are essentially reverse proxies in terms of HTTP. As opposed to the balancers working on lower layers, the layer 7 load balancers can take advantage of explicit protocol knowledge. This comes with clear performance penalties due to a higher overhead of parsing traffic up to the application layer. Benefits of this technique are the the possibility of HTTP-aware balancing decisions, potential caching support, transparent SSL termination and other HTTP-specific features. Similar to IP virtual servers, layer 7 balancers are less performant than web switches. But being hosted on commodity hardware results in a decent horizontal scalability.</p>
+
+<h4 id="balancing">Balancing Strategies</h4>
+<P>
+Various load-balancing strategies have been developed&nbsp;[<A
+ HREF="0_bibliography.html#Schlossnagle2006">Sch06</A>,<A
+ HREF="0_bibliography.html#Schwartz2008">Sch08</A>] and the design of effective balancing algorithms is still a matter of academic interest in the era of Cloud Computing&nbsp;[<A
+ HREF="0_bibliography.html#Randles2010">Ran10</A>]. A major challenge of strategies is the difficulty to anticipate future requests. The missing a priori knowledge limits the strategies to make only a few assumptions based on the recent load, if any assumptions are made at all.
+
+<P>
+<DL>
+<DT><STRONG>Round Robin</STRONG></DT>
+<DD>All servers are placed in a conceptual ring which gets rotated on each request. A drawback of this simple mechanism is the unawareness of overloaded servers.
+	
+</DD>
+<DT><STRONG>Least Connections</STRONG></DT>
+<DD>Following this strategy, the balancer manages a list of servers and their active connection count. New connections are forwarded based on this knowledge. The idea rests on the fact that connections seize machine resources and the machine with the least connections or the smallest backlog has still the most capacities available.
+	
+</DD>
+<DT><STRONG>Least Response Time</STRONG></DT>
+<DD>This strategy is similar to the previous one, but uses the response times instead of connection counts. The rationale behind the metering via response times is based on the expressiveness of latencies for the server load, especially when the workloads per connection differ.
+	
+</DD>
+<DT><STRONG>Randomized</STRONG></DT>
+<DD>In a randomized strategy, the load balancers picks a backend web server by chance. This mechanism achieves suprisingly good results, thanks to probabilistic distribution. 
+	
+</DD>
+<DT><STRONG>Resource-aware</STRONG></DT>
+<DD>A resource-aware strategy utilizes external knowledge about the servers' utilizations, but also metrics suchs as connection counts and response times. The values are then combined to weight all servers and distribute load correspondingly.
+</DD>
+</DL>
+
+<P>
+Besides these basic strategies, there are various advanced algorithms that often combine different approaches. Furthermore, load-balancing strategies become more difficult, when there are more than one load balancers deployed at the same time. Some of the strategies estimate utilization based on their forwarding decisions. Multiple load balancers might interfere the individual assumptions. As a result, cooperative strategies are often required that share knowledge between balancers. 
+
+<P>
+According to Schlossnagle&nbsp;[<A
+ HREF="0_bibliography.html#Schlossnagle2006">Sch06</A>], a <SPAN CLASS="MATH">70%</SPAN> per-server utilization is a respectable goal in a larger architecture. Higher utilizations are unrealistic due to short-liveness of tasks, the high throughput rate and missing future knowledge about incoming requests.</p>
+ 
+ 
+<h4 id="sessions">Session Stickiness</h4>
+<p>Session stickiness is a technique to map a certain user accessing a web application to the same backend web server during his browsing session. Hence, it is sufficient to store session states on the respective servers. While session stickiness is inherently provided in single server setups, this concept is very difficult when it comes to load balancing. Essentially, session stickiness requires the load balancer to forward a request according to the session used (i.e. parsing a cookie, reading a session variable or customized URI). As a result, the load balancer starts to distribute sessions to machines instead of single connections and requests. While this setup is attracting and handy for web application developers, it represents are severe challenge from a scalability and availability perspective. Loosing a server equates a loss of associated sessions. The granularity of single requests enables a sound distribution mechanism when demand increases. New servers can be added to the architecture, but splitting and reallocating existing sessions already bound to distinct machines is complex. 
+As a result, the concepts of effective resource utilization and allocation of session data should not be conflated, otherwise scalability and availability are in danger. In terms of load balancing, session stickiness is regarded as a misconception and should be avoided&nbsp;[<A
+ HREF="0_bibliography.html#Schlossnagle2006">Sch06</A>]. Instead, a web architecture should provide means to access session data from different servers. A more stateless communication, where the clients manage session state, further mitigates the problem of session stickiness.</p>

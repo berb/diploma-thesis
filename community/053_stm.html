@@ -1,0 +1,250 @@
+<title>5.3 Concurrency via Software Transactional Memory</title>
+
+<meta charset="utf-8">
+
+<link rel="stylesheet" href="../style.css">
+
+<link rel="prev" href="052_threads.html"> 
+<link rel="next" href="054_actors.html"> 
+
+
+<script src="../script.js"></script>
+
+<h2 id="02">5.3 Concurrency via Software Transactional Memory</h2>
+<P>
+We have seen that lock-based concurrency has several drawbacks. 
+Indeterminacy and shared state requires a protection from race conditions. 
+The concept of locks holds the developer responsible for guarding critical sections by explicitly placing locks.
+In turn, this may yield unpredictable locking issues at runtime due to lock orders and indeterminacy.
+Also composability of concurrent code is not guaranteed when locks are used.
+
+<P>
+We now examine an alternative approach, that is still built on the concept of shared state and locks,
+but does not rely on the developer's reasoning for correct locking. 
+Instead, locking becomes part of the underlying runtime environment, and the programming language 
+provides higher abstractions for concurrent sections of code.  
+
+<h3 id="tm">Transactional Memory</h3>
+<P>
+A lock-free alternative for shared state concurrency is TM. It goes back to a well-known concept in computer science, transactions. The idea of concurrent, yet isolated operations is an established concept for database systems&nbsp;[<A
+ HREF="0_bibliography.html#Hellerstein2007">Hel07</A>]. TM takes up this idea and applies it to shared state concurrency&nbsp;[<A
+ HREF="0_bibliography.html#Knight1986">Kni86</A>,<A
+ HREF="0_bibliography.html#Herlihy1993">Her93</A>].
+While database transactions read and write on database rows, TM transactions read and write on state shared with other threads. The concept of TM can be implemented in various ways.
+HTM provides an hardware implementation of TM, that extends CPU architectures by transactional components such as transactional caches and an extended instruction set. STM does not require any hardware changes and supports transaction handling entirely in software. Hybrid TM is essentially an STM implementation that takes advantage of progressing hardware support for TM. Due to high development and implementation costs of HTM, 
+TM is primarily available in the form of STM. However, some believe that hybrid models may 
+eventually appear, once this programming model has been established&nbsp;[<A
+ HREF="0_bibliography.html#Cascaval2008">Cas08</A>].  
+
+<P>
+Traditional transactions (see <a href="index.html#chapter/6">chapter 6</a>) provide several guarantees, namely atomicity, consistency, isolation and durability.
+Hence, transactions appear as single operations that do not yield inconsistent state while running but not having committed or aborted yet. They also do not interfere with other running transactions and their outcome is always persisted.
+Note that this kind of durability differs from transactions for database systems and  TM. The latter only keeps the transaction outcome in memory, but does not recover state from application crashes.
+As a consequence of these properties, transactions are serializable. The outcome of transactions can be reproduced by an equivalent sequential execution of seemingly atomic operations.
+Concurrency control for transactions can either be pessimistic or optimistic. 
+Pessimistic concurrency control forces conservative locking of resources and results in low transaction throughput. Optimistic concurrency control delays the integrity checks of a transaction to its end.
+In case of a conflict, the transaction is aborted and gets restarted. 
+When transactions are not long-running and do not conflict too often, optimistic concurrency control provides
+a very good performance with a negligible overhead of retries.  
+
+<h3 id="stm">Software Transactional Memory</h3>
+<p>We will now solely focus on STM, as there are already several implementations available. 
+Optimistic concurrency control is preferred by existing STM implementations.
+In order to integrate STM concepts into a language and implement an underlying STM runtime, it is important to realize what constructs are necessary on language level. On one hand, we need a way to label sections of code as transactional. On the other hand, we might want to differentiate variables and resources that are shared between threads and need transactional call semantics and non-transactional, thread-local variables. 
+Otherwise, any read or write operation would result in a transaction.
+
+<P>
+Once a transaction has been started at runtime, the underlying implementation starts to keep a read set and a write set&nbsp;[<A
+ HREF="0_bibliography.html#Herlihy1993">Her93</A>]. Both sets contain all variables and states that the transaction has read or altered. This is necessary for a later integrity check before committing. Also, as long as the transaction is pending, changes are not applied to the actual share variables, but on thread-local copies, often in form of a transaction log.
+Once the transaction has been verified as not conflicting, all of its changes are then flushed to the actual shared states in an atomic step. While this often contains some forms of locking, this behavior is entirely 
+transparent for the developer.
+In order to detect conflicting transactions, the STM implementation compares the read and write sets of a transaction with the actual states before committing. When another transaction has already altered a state and has committed successfully, the STM detects the discrepancy and aborts the transaction.
+Instead, the old read and write sets get discarded and refreshed, and the transactions restarts.
+To some extent, starvation situations can still occur, especially when a long-running transaction is steadily outpaced by other transactions that successfully commit first.
+Apart from that, STM provides mutual exclusion without explicit locking, and without the danger of the aforementioned locking issues so far.
+
+<P>
+In order to represent a valuable concurrency model, additional features are still needed. We have seen that lock-based multithreading lacks support for composability. Also, we need mechanisms to coordinate different threads using STM. Both requirements have been addressed in an extended STM model&nbsp;[<A
+ HREF="0_bibliography.html#Harris2008">Har08</A>].
+The granularity of transactions allows to glue together different transactional operations, yielding a new,
+again transactional composite operation. More advanced compositions can be implemented using operators such as  <TT>retry</TT> and <TT>orElse</TT>. The former operator is based on a concept similar to that of condition variables for monitors. When a running transaction checks a condition containing a state that differs from the  expected value, the transaction can "yield" by calling <TT>retry</TT>. Thanks to the read set, the underlying runtime detects which variables have been accessed so far. Once one of these variables has been altered in other transactions, the runtime resumes the prior transaction and checks if the condition evaluates to true.
+The <TT>orElse</TT> operator allows to compose two or more transactions. When the the first transaction calls yields via <TT>retry</TT>, the next transaction is executed instead.
+In essence, these operators introduce the concept of blocking coordinations into the transactional model. Hence, transactions can now wait for events to occur, or include alternative control flow in a single transaction behavior. 
+
+<P>
+There are important limitations of STM. As TM transactions are limited to memory operations, they can only be used when coordinating access to shared state, but not to external resources. 
+Furthermore, the transactional character requires operations to be irrevocable, so transactions must not have any side effects apart from modifications of shared state. For example, the usage of I/O operations inside transactions is disallowed.    
+
+<P>
+Furthermore, the length of transactions and the ratio of conflicting transactions have a lasting effect on the performance of STM deployments. The longer transactions take to execute, the more likely they cause conflicts and must be aborted, at least in case of many contending transactions.  
+
+<P>
+However, STM provides a beneficial extension of the traditional concurrency model of shared state and threads that evades the burden of locking.
+It allows to compose concurrent operations without the danger of deadlocks.
+However, contention and starvation can still occur in a STM system. The former is often the result of many simultaneous transactions altering the same values. The latter might become apparent when a very lengthy transaction continuously competes with multiple short transactions.
+
+<P>
+When implemented with optimistic concurrency control, STM provides reasonable performance, as long as there are not many concurrent and conflicting write operations.
+
+
+<h3 id="analogy">The TM / Garbage Collection Analogy</h3>
+<P>
+The idea of TM and the STM approach for lock-based programming are still controversial.
+Critics argue that STM continuously faces several challenges&nbsp;[<A
+ HREF="0_bibliography.html#Cascaval2008">Cas08</A>], and that's why it
+is still primarily of academical interest so far. 
+For instance, it is still unclear how to handle transactional and nontransactional access to the same variable, and how to privatize variables (i.e. switching from transactional to thread-local access). 
+Also, the drawbacks of requiring side-effect free code raises the question, how to incorporate code that cannot be defined as a transaction into transactional operations.
+Still the most prominent argument against STM is the performance overhead induced by the software-based implementation of transaction handling.
+
+<P>
+Proponents of STM counter that the performance of recent STM systems has vastly increased and STM already represents a robust solution&nbsp;[<A
+ HREF="0_bibliography.html#Dragojevic2011">Dra11</A>]. Various implementations also came up with different approach to privatization.
+Last but not least, the continuing success of Clojure testify the maturity of newer STM implementations.
+Clojure is the first programming language that has a STM as first-class, built-in concurrency concept.
+Prior to Clojure, STM implementations were mainly found as extensions to Concurrent Haskell, based on special monads.
+
+<P>
+Probably the most interesting notion in this argument around TM is the analogy to garbage collection&nbsp;[<A
+ HREF="0_bibliography.html#Grossman2007">Gro07</A>].
+While garbage collection addresses managed references, TM addresses managed state. Both concepts operate on the memory at runtime and take difficult work out of the hands of application developers.
+Compared to TM, very similar objections have been raised against garbage collection, when it has been suggested for the first time.
+Also, the first garbage collectors suffered from observable performance overheads compared to manual memory management. However, garbage collectors have been vastly improved over time are now an integral part of many high-level languages.
+As the model of shared memory will continue to prevail in the near future, time will tell if the analogy goes on and TM will establish itself as a reasonable high-level abstraction for shared state concurrency.
+
+
+<h3 id="clojure">Case Study: Concurrency in Clojure</h3>
+<P>
+<a href="http://clojure.org/">Clojure</a> is a programming language that runs on the JVM and is heavily influenced by Lisp. It has a strong focus on functional programming concepts. Another defining feature of Clojure is its elaborate approach towards concurrency. 
+In fact, concurrent programming has been one of the main reasons for developing Clojure in the first place&nbsp;[<A
+ HREF="0_bibliography.html#Hickey2008">Hic08</A>].
+Like Scala, Clojure builds on Java and internally uses Java concurrency primitives. 
+Clojure provides a very strong immutability concept combined with asynchronous agents and a mature implementation of STM.
+
+<P>
+In order to understand the cooperation between those concepts, it is necessary to elaborate the notions of identity, state, references and values for Clojure in detail.
+A value is an immutable piece of data that does never change. This is even true for imperative programming to some extent. For instance, we don't directly change the value (i.e. number) of a numeric variable, we rather assign another value to the variable instead. This does not affect the old value though.
+Object-oriented programming obfuscates this concept by unifying identity and state.
+In Clojure, an identity is <a href="http://clojure.org/state">"a stable logical entity associated with a series of different values over time"</a>. In other words, an identity is an entity with a mutable association to a value, an the state of an identity is captured by its value at a given time. 
+A reference points to an identity, which in turn points to a value, depending on the current state.
+State changes are reassignments of identities to other values. 
+
+<P>
+While this is self-explanatory for values such as numbers, Clojure applies this principle to data structures as well. When a list is changed by adding a new element, the new value is the old list appended with the new element. However, the old list still remains unchanged.  
+For supporting this concept for non-primitive data types such as lists and maps, Clojure makes use of so-called persistent data structures&nbsp;[<A
+ HREF="0_bibliography.html#Okasaki1996">Oka96</A>]. 
+In this context, persistent does not denote durable storage. Instead, persistent data structures preserve their history. Efficient implementations that hold multiple versions of a data structure without redundant values represent the main challenge for persistent data structures.
+This indirection is an important property for the concurrency concept of Clojure and preserves the immutability of values. 
+
+<P>
+The runtime system of Clojure supports state changes based on values and identities automatically.
+Therefore, Clojure provides four different types of references to mutable state, that have different impacts, as shown in table&nbsp;<A HREF="#tbl:clojure_state">:autorefClojure primitives for handling mutable state.5.0</A>.
+The <TT>var</TT> reference primitive resembles traditional variables of imperative programming languages that can be reassigned to other values. However, <TT>var</TT>s are only thread-local, and cannot be accessed by other threads. Consequentially, state is mutable, but not shared.
+
+<div class="figure" id="table/1">
+
+<table>
+
+<thead>
+
+<TR>
+
+<TH ALIGN="CENTER"></TH>
+<TH ALIGN="LEFT"><SMALL CLASS="SMALL"> <SPAN  CLASS="textbf">synchronous</SPAN> </SMALL></TH>
+<TH ALIGN="LEFT"><SMALL CLASS="SMALL"> <SPAN  CLASS="textbf">asynchronous</SPAN></SMALL></TH>
+</TR>
+
+</thead>
+
+<tbody>
+<TR><TH ALIGN="LEFT"><SMALL CLASS="SMALL">
+
+<SPAN  CLASS="textbf">coordinated</SPAN> </SMALL></TH>
+<TD ALIGN="LEFT"><SMALL CLASS="SMALL"> <TT>ref</TT> </SMALL></TD>
+<TD ALIGN="LEFT"><SMALL CLASS="SMALL">   </SMALL></TD>
+</TR>
+<TR><TH ALIGN="LEFT"><SMALL CLASS="SMALL">
+<SPAN  CLASS="textbf">independent</SPAN> </SMALL></TH>
+<TD ALIGN="LEFT"><SMALL CLASS="SMALL"> <TT>atom</TT> </SMALL></TD>
+<TD ALIGN="LEFT"><SMALL CLASS="SMALL"> <TT>agent</TT>  </SMALL></TD>
+</TR>
+<TR><TH ALIGN="LEFT"><SMALL CLASS="SMALL">
+<SPAN  CLASS="textbf">thread-local</SPAN> </SMALL></TH>
+<TD ALIGN="LEFT"><SMALL CLASS="SMALL"> <TT>var</TT> </SMALL></TD>
+<TD ALIGN="LEFT"><SMALL CLASS="SMALL">  </SMALL></TD>
+</TR>
+</tbody>
+
+</table>
+
+<p class="caption">Table 5.1: Clojure primitives for handling mutable state.</p>
+</div>
+<P>
+The <TT>atom</TT> reference primitive is very similar to the atomic entities of Java. They allow to manage shared, synchronous, independent state. The state of an <TT>atom</TT> can be accessed by explicit dereferencing. For changing the value, there are three operations, namely <TT>reset</TT> (setting a new value), <TT>swap</TT> (applying a modification function) and <TT>compare-and-set</TT> (lower-level variant). 
+
+<P>
+The <TT>ref</TT> primitive defines references that can be accessed for a read operation by using dereferencing.
+Modifying operations can only be executed as part of a STM transaction. 
+The STM implementation of Clojure uses MVCC&nbsp;[<A
+ HREF="0_bibliography.html#Bernstein1981">Ber81</A>,<A
+ HREF="0_bibliography.html#Reed1978">Ree78</A>], a concurrency control mechanism based on timestamps.
+The <TT>dosync</TT> function is used for encapsulate transactional operations and all function calls in its function body run in the same transaction. For operating on <TT>ref</TT>s inside a transaction, there are different functions. <TT>ref-set</TT> is used for directly setting the <TT>ref</TT> to a new value. The <TT>alter</TT> operation applies a function which implements the exchange of state of the <TT>ref</TT>.
+The <TT>commute</TT> operations works the same way like <TT>alter</TT>, but implies that the modifying function is commutative, effectively allowing more concurrency internally (using in-transaction values).   
+Finally, <TT>ensure</TT> prevents other transactions from setting an in-transaction value for the <TT>ref</TT>. This avoids write skews: multiple transactions read overlapping data sets, but make disjoint modifications without seeing the changes of other transactions.
+As already mentioned, transactions should not contain operations with side effects, such as I/O operations. 
+That's because the internal STM implementation may abort and retry transactions.
+
+<P>
+The last primitive is <TT>agent</TT>, providing independent, asynchronous and shared access to mutable state.
+Agents isolate state that can be dereferenced by threads for read access. 
+Threads can also send actions (i.e. modifying functions) to an agent. The agent then executes incoming actions sequentially. Execution happens asynchronously in regard to the sender of the action, and execution is always guaranteed to run single-threaded per <TT>agent</TT>.
+The agent concept is different from the idea of an actor, as we will see soon.
+An agent executes incoming functions on its internal state. Hence, the sent functions define a behavior.
+An actor provide its own internal behavior and waits for handling incoming immutable messages.
+
+<P>
+Clojure forces developers to explicitly label mutable state. Otherwise, state cannot be modified at all. 
+Only this makes Clojure applications more robust, as it prevents accidental and unintended mutability. 
+It requires the developers to pick an appropriate concurrency primitive for state handling.
+
+<P>
+<a href="http://avout.io/">Avout</a> is an external contribution to Clojure that provides a distributed MVCC STM implementation based on <a href="http://zookeeper.apache.org/">Apache ZooKeeper</a> for coordination. It enables the usage of <TT>atom</TT> and <TT>ref</TT> primitives between multiple (remote) JVM instances.
+
+<p>A minimalistic, concurrent web application written in Clojure that returns the number of requests handled so far:</p>
+<p><pre>(ns counting.server
+  (:use noir.core)
+  (:require [noir.server :as server]))
+
+(def counter (ref 0))
+
+(defpage "/" []
+	(dosync (commute counter inc))
+    (str @counter))
+
+(server/start 8080)</pre></p>
+
+
+<P>
+The previous listing provides a Clojure-based solution to our previous web application example. 
+The solution takes advantage of the <a href="http://webnoir.org/">noir web framework</a>, which in turn uses the jetty web server.
+The minimalistic application defines a <TT>counter</TT> of type <TT>ref</TT> and a registers a function for request handling. On each request, this functions executes an STM transaction within the <TT>dosync</TT> block. In this case, the <TT>commute</TT> operation is used, which <TT>inc</TT>rements the <TT>counter</TT> value transactionally. Usually, the <TT>alter</TT> method is used instead of <TT>commute</TT>. However, the increment operation is commutative, hence we might speed up the transaction execution when using <TT>commute</TT>. After the transaction has finished, the value of <TT>counter</TT> is dereferenced (<TT>@</TT>), converted into a <TT>str</TT>ing and returned as response. 
+We deliberately dereference the value of the <TT>counter</TT> <TT>ref</TT> outside rather than inside the actual transaction, in order to demonstrate the possibility non-transactional read access to <TT>ref</TT>s (this yields a short window in which the value might have already been changed by another request).
+Like in the previous Java example, it would be more elegant to use a Clojure <TT>atom</TT> instead, as the counter is the only variable to be modified. 
+
+
+<h3 id="app">STM for Concurrent Application Logic</h3>
+<p>Like in the previous lock-based approach, application servers using STM also map requests to threads.
+We have seen that this approach becomes increasingly inadequate, when I/O-bound operations dominate.
+STM does not provide a solution to this issue, in fact, it disallows I/O operations inside transactions at all.
+However, STM can support concurrent application logic, when state is shared in an application server.
+Depending on the type of application, application state may be sharded and isolated to several distinct servers (e.g. multiplayer games with small parties hosted on a distinct server), or it must be available for all application servers (e.g. instant message notifications in social web applications). In the latter case, distributed STM variants allow for distribution aspects.
+When the STM implementation provides mechanisms that are similar to condition variables, 
+coordination between threads as part of transactions is also supported.
+
+<P>
+As a result, STM renders shared state inside application servers more manageable, thanks to the absence of explicit locking, but does not solve I/O-bound parallelization issues.
+
+
+
+
+

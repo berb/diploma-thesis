@@ -920,9 +920,6 @@ code {
     height: 40px;
     background: transparent url(../../image/bubble/up.png) no-repeat 50% 50%;
   }
-
-
-
 }
 
 @media screen and (max-device-width: 680px), screen and (max-width: 680px) {
@@ -950,4 +947,12 @@ code {
     height:auto !important;
     height: 400px;
   }
+}
 
+
+/* LaTeX */
+
+SPAN.textbf		{ font-weight: bold  }
+SPAN.eqn-number		{   }
+SPAN.arabic		{   }
+SPAN.textit		{ font-style: italic  }

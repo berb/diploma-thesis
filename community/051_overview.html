@@ -1,0 +1,70 @@
+<title>5.1 Overview</title>
+
+<meta charset="utf-8">
+
+<link rel="stylesheet" href="../style.css">
+
+<link rel="prev" href="050_index.html"> 
+<link rel="next" href="052_threads.html"> 
+
+
+<script src="../script.js"></script>
+
+<h2 id="02">5.1 Overview</h2>
+
+<p>An application server provides a reactive behavior that generates responses as a result to incoming requests.
+The application server component receives invocations from upstream web servers in form of high-level messages (alternatively RPC calls or similar mechanisms). It is thus decoupled from low-level connection handling or request parsing duties.
+In order to generate a proper response, the application server executes business logic mapped to request URIs.
+The flow of execution for a request inside an application server includes interactions with different components of the architecture, such as databases and backend services, but also computational operations as part of the application logic:
+
+<P>
+<DL>
+<DT><STRONG>CPU-bound activities</STRONG></DT>
+<DD>CPU-bound activities are tasks that primarily consume CPU time during execution. In general, these tasks are computationally heavy algorithms operating on in-memory data. In terms of a web applications, this applies to tasks such as input validation, template rendering or on-the-fly encoding/decoding of content.
+</DD>
+<DT><STRONG>I/O-bound activities</STRONG></DT>
+<DD>I/O-bound activities are tasks mainly limited by I/O resources, such as network I/O or file I/O. I/O-bound activities often take place when tasks operates on external data that is not (yet) part of its own memory. In case of our architectural model, this includes access to most platform components, including storage backends, background services and external services.
+</DD>
+</DL>
+
+<div class="figure" id="figure/1">
+<img src="resources/req_para.svg" style="width:100%">
+<p class="caption">Figure 5.1: A flow of execution for request handling. The application server first queries a cache, then dispatched two independent database queries, and finally accesses the cache again.
+On the left side, execution is strictly sequential. On the right side, the independent operations are parallelized in order to improve latency results.</p>
+</div>
+
+<P>
+A request to a web application typically triggers operations of both types, although the actual ratio depends on the application internals. Many content-rich web applications (e.g. blogs, wikis) primarily rely on database operations, and to some extend on template rendering. 
+Other applications are mainly CPU-bound, like web services that provide computational services or web services for media file conversions.
+Low latencies of responses are favored in both cases, as they are important for a good user experience.
+
+<P>
+The application logic associated to a request is often implemented in a sequential order. In order to minimize
+latencies, the parallelization of independent operations should be considered, as shown in <a href="#figure/1">figure 5.1</a>. 
+In a directed graph representation, a first node represents the arrival of the request and a last node the compiled response. Nodes in between represent operations such as database operations or computation functions. 
+Splitting up the flow of control results in parallel operations, that must be synchronized at a later time. 
+This pattern, also known as <SPAN  CLASS="textit">scatter and gather</SPAN>&nbsp;[<A
+ HREF="0_bibliography.html#Hohpe2003">Hoh03</A>], is particularly viable for I/O-bound activities,
+such as database operations and access to other architecture components (network I/O).
+
+<div class="figure" id="figure/2">
+<img src="resources/req_coord.svg" style="width:100%">
+<p class="caption">Figure 5.2: A coordination between pending requests as part of an interactive web application. The browser of user A continuously sends requests for notifications by using long polling. 
+Once user B posts a new message, the web application coordinates the notification and responds to both pending requests, effectively notifying user A.</p>
+</div>
+
+
+<P>
+Furthermore, request processing might include coordination and communication with other requests, either using external messaging components, or using a built-in mechanism of the application server component.
+For instance, this is necessary for collaborative, interactive and web real-time applications.
+Dedicated requests are then dispatched enabling the server to eventually send a response at a later time triggered by the actions of other requests or other server-side events.
+
+<P>
+In essence, modern web applications make use of concurrency properties that differ from the notion of entirely isolated requests of earlier applications, as shown in <a href="#figure/2">figure 5.2</a>. 
+Application state is not entirely harbored inside database systems anymore, 
+but also shared in other components to some extent, and maybe even between requests.
+Features for collaboration and interactivity as well as the demand for low latencies
+do not allow to eschew synchronization and coordination anymore. 
+Instead, true concurrency must be embraced for the application logic of web applications. 
+For the rest of this chapter, we study different approaches towards concurrent programming and how they manage
+state, coordination and synchronization. Then, we examine how concurrent web applications can take advantage of these concepts.

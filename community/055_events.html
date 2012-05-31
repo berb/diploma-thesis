@@ -1,0 +1,134 @@
+<title>5.5 Event-driven Concurrency</title>
+
+<meta charset="utf-8">
+
+<link rel="stylesheet" href="../style.css">
+
+<link rel="prev" href="054_actors.html"> 
+<link rel="next" href="056_other.html"> 
+
+
+<script src="../script.js"></script>
+
+<h2 id="02">5.5 Event-driven Concurrency</h2>
+<P>
+We have already got to know the concept of event-driven architectures in <a href="index.html#chapter/4">chapter 4</a>.
+Although event-driven programming does not represent a distinct concurrency model per se,
+the concepts of event loops and event handlers and their implementations have strong implications 
+on concurrent programming.
+Events and event handlers are often confused with messages and actors, so it is important to
+point out that both concepts yield similar implementation artifacts.
+However, they do not have the exactly same conceptual idea in common. Actor-based systems implement the actor model with all of its characteristics and constraints. Event-driven systems merely use events and event handling as building blocks and get rid of call stacks.
+We have now a look at the original idea of event-driven architectures "in the large", 
+and examine the event-driven programming model afterwards. 
+
+<h3 id="eda">Event-driven Architectures</h3>
+<p>Whether in small application components or in large distributed architectures, the concept of event-driven architectures&nbsp;[<A
+ HREF="0_bibliography.html#Hohpe2006">Hoh06</A>] yields a specific type of execution flow.
+Conventional systems are built around the concept of a call stack that bears on several assumptions.
+Whenever a caller invokes a method, it waits for the method to return, perhaps yielding a return value.
+Finally, the caller continues with his next operation, after his context has been restored. The invoked method in turn might have executed other methods on its own behalf. Coordination, continuation and context are thus inherent features of the call stack. 
+The imperative model assumes a sequential execution order as a distinct series of maybe nested invocations. A caller knows in advance which methods are available and which services they expose. A program is basically a path of executions of instructions and method invocations.    
+Hence, a call stack is very formative for programming concepts and it so pervasive, that many developers take it for granted.
+
+<P>
+Surprisingly, event-driven architectures reject the concept of a call stack and consequently lose its inherent features.
+Instead, these architectures promote more expressive interaction styles beyond call/return and a looser coupling of entities. Basic primitives of this concept are events. Events occur through external stimuli, or they are emitted by internal entities of the system. Events can then be consumed by other entities. 
+This not just decouples callers and callees, it also obviates the need for the caller to know who is responsible for handling the invocation resp. event. This notion obviously causes a shift of responsibilities, but allows more versatile compositions and flows. The event-driven architecture is also inherently asynchronous, as there is neither a strong coupling between event producers and event consumers, nor a synchronous event exchange.
+
+<P>
+In essence, the event-driven model represents an approach for designing composable and loosely coupled systems with expressive interaction mechanisms, but without a call stack.      
+Event-driven architectures do not represent or nominate a certain concurrency model.
+Unsurprisingly, thread-based event loops and event handlers are often used for implementations of event-driven architectures, next to message passing approaches.
+
+<h3 id="st">Single-threaded Event-driven Frameworks</h3>
+<p>Several platforms and frameworks use event-driven architectures based on event loops and event handlers for
+the implementation of scalable network services and high-performance web applications.
+Popular solutions include <a href="http://nodejs.org/">node.js</a>, 
+<a href="http://twistedmatrix.com/">Twisted Python</a>, 
+<a href="http://rubyeventmachine.com/">EventMachine (Ruby)</a> and
+<a href="http://poe.perl.org/">POE (Perl)</a>.
+
+<P>
+The programming languages used by these systems still provide a call stack. However, these systems do not use
+the call stack for transporting state and context between event emitters and event handlers.
+
+<P>
+While it is generally possible to apply multithreading&nbsp;[<A
+ HREF="0_bibliography.html#Zeldovich2003">Zel03</A>], most of the aforementioned frameworks and platforms rely on a single-threaded execution model.
+In this case, there is a single event loop and a single event queue. 
+Single-threaded execution makes concurrency reasoning very easy, as there is no concurrent access on states and thus no need for locks. When single-threading is combined with asynchronous, non-blocking I/O operations (see <a href="index.html#chapter/4">chapter 4</a>), an application can still perform very well using a single CPU core, as long as most operations are I/O-bound. Most web applications built around databases operations are indeed I/O-bound, and computationally heavy tasks can still be outsourced to external processes. When applications are designed in a shared-nothing style, multiple cores can be utilized by spawning multiple application instances.
+
+<P>
+In <a href="index.html#chapter/4">chapter 4</a>, we have seen that single-threaded event-driven programming does not suffer from context switching overheads and represents a sweet spot, when cooperative scheduling is combined with automatic stack management.
+We have also seen previously that the missing call stack in event-driven architectures relinquishes free coordination, continuation and context.
+
+<P>
+The event-driven programming style of these frameworks provide different means to structure application code and manage control flow.
+The event loop sequentially processes queued events by executing the associated callback of the event.
+Callbacks are functions that have been registered earlier as the event handler for certain types of events.
+Callbacks are assumed to be short-running functions that do not block the CPU for a longer period,
+since this would block the entire event loop.
+Instead, callbacks are usually short functions that might dispatch background operations, that eventually yield new events.  
+Support for anonymous functions and closures are an important feature of programming languages for event-driven programming, because the first-class functions are used to define callbacks, and closures can provide a substitute for context and continuation. Due to the fact that closures bind state to a callback function,
+the state is preserved in the closure and is available again once the callback is executed in the event loop.
+The notion of single-threaded execution and callbacks also provides implicit coordination, since
+callbacks are never executed in parallel and each emitted event is eventually handled using a callback.
+It is safe to assume that no other callback runs in parallel, and event handlers can yield control and thus support cooperative scheduling.
+Once a callback execution has finished, the event loop dequeues the next event and applies its callback.
+Event-driven frameworks and platforms provide an implicit or explicit event loop, an asynchronous API for I/O operations and system functions, and means to register callbacks to events.
+
+<P>
+Using a single thread renders the occurrence of a deadlock impossible. But when developers do not fully understand the implications of an event loop, issues similar to starvations and race conditions can still appear.
+As long as a callback executes, it consumes the only thread of the application. When a callback blocks, either by running blocking operations or by not returning (e.g. infinite loops), the entire application is blocked.  
+When multiple asynchronous operations are dispatched, the developer must not make any assumptions on the order of execution of their callbacks. Even worse, the executions of the callbacks can interleave with other callbacks from other events. Assumptions on callback execution ordering are especially fatal when global variables instead of closures are used for holding state between callbacks.
+
+
+<h3 id="nodejs">Case Study: Concurrency in node.js</h3>
+<P>
+Node.js is a platform built on the v8 JavaScript engine of Google's Chrome browser, an event library for asynchronous, non-blocking operations and some C/C++ glue code&nbsp;[<A
+ HREF="0_bibliography.html#Tilkov2010">Til10</A>]. It provides a lightweight environment for 
+event-driven programming in JavaScript, using a non-blocking I/O model. 
+Compared to other event-driven frameworks and platforms, node.js sticks out due to several reasons.
+Unlike many other programming languages, JavaScript has neither built-in mechanisms for I/O, nor for concurrency.
+This allows to expose a purely asynchronous, non-blocking API for all operations and prevents the accidental use of blocking calls (in fact, there are also blocking API calls for special purposes).  
+With its good language support for anonymous functions, closures and event handling, JavaScript also supplies a strong foundation of primitives for event-driven programming. 
+The event loop is backed by a single thread, so that no synchronization is required at all. Merging multiple event sources such as timers and I/O notifications and sequentially queueing events is also hidden inside the platform.
+
+<P>
+Node.js does not expose the event loop to the developer. A node.js application consists of a sequence of operations that might provide asynchronous behavior. For each asynchronous operation, a proper callback should be specified. A callback, in turn, can dispatch further asynchronous operations.
+For instance, a node.js web server uses a single asynchronous function to register an HTTP server, passing a callback. The callback defines function to be executed each time a new request is received. The request handling callback in turn might execute file I/O, which is also asynchronous. 
+This results in heavy callback chaining and an obvious inversion of control due to the callback-centric style. 
+This outcome requires strict coding rules or the assistance of libraries in order to keep code readable and manageable without losing track of the flow of execution.
+One of these libraries is <a href="https://github.com/caolan/async">async</a>, which makes heavy use of functional properties of JavaScript. It provides support for control flow patterns such as waterfall, serial and parallel execution, functional concepts like map, reduce, filter, some and every, and concepts for error handling. All these abstractions make callback handling more reasonable.
+Although node.js is a rather new platform, there are already many libraries and extensions available, especially for web application development. 
+One of the most distinguished libraries for node.js is <a href="http://socket.io/">socket.io</a>. It provides web realtime communication mechanisms between a server and browsers, but abstracts from the underlying transport.
+Hence, the developer can use send functions and message event handlers both for server-side and client-side application code. The underlying communication uses WebSockets, but supports several fallbacks such as long polling, when not available.
+
+<p>A minimalistic, concurrent web application written in JavaScript that returns the number of requests handled so far, using the node.js platform:</p>
+
+<p><pre>var http = require('http');
+
+var count = 0;
+
+http.createServer(function (req, res) {
+	res.writeHead(200, {'Content-Type': 'text/plain'});
+	res.end((++count)+'\n');
+}).listen(8080);</pre></p>
+
+<P>
+The previous listing, how shared application state is handled in a single-thread event-driven application, in this case node.js. 
+The application defines a global <TT>count</TT> variable. Then, a server is created with a callback for request handling. The callback responds to every request by incrementing the <TT>count</TT> variable and returning its value. Thanks to the single-threaded execution model, there is no synchronization required when accessing or modifying the variable.
+
+<P>
+
+<h3 id="app">Event-driven Concurrent Application Logic</h3>
+<P>
+It is obvious that single-threaded, event-driven application servers cannot reduce latencies of CPU-bound requests.
+Most platform components are part of our distributed architecture, hence most of the operations of a request are in fact I/O-bound. For complex computations, we also provide a decoupled background worker pool.
+Thus, the event-driven approach is a suitable concept when the application logic primarily dispatches work tasks, calls, and requests to the platform components and later combines the results without high computational efforts.
+The advantages of the event-driven approach for I/O-bound parallelism have already been illustrated in <a href="index.html#chapter/4">chapter 4</a>.   
+When shared application state and pub/sub coordination mechanisms are outsourced to platform components, this mechanism fits well into the event-driven approach.
+Actually, if application state can be isolated to separate application servers (e.g. sessions of interactive web applications), another benefit of the event-driven approach comes even more handy. The single-threaded execution models makes it very easy to access and modify mutable state between requests, because no real concurrency is involved. 
+
+

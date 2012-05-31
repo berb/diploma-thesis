@@ -1,0 +1,36 @@
+<title>5. Concurrency Concepts for Applications and Business Logic </title>
+
+<meta charset="utf-8">
+
+<link rel="stylesheet" href="../style.css">
+
+<link rel="prev" href="044_summary.html"> 
+<link rel="next" href="051_overview.html"> 
+
+
+<script src="../script.js"></script>
+
+<h2 id="05">5. Concurrency Concepts for Applications and Business Logic </h2>
+
+<P>
+The previous <a href="index.html#chapter/4">chapter 4</a> has dealt with connection concurrency as an issue for web servers.
+The challenge is characterized by massively I/O-bound operations, but very limited mutable state.  
+In this chapter, we have a look at concurrency from a different angle, 
+by focusing on application servers. That is, the component responsible for executing 
+the actual business logic of an application, stimulated by incoming requests. 
+
+<P>
+The inherent parallelism of requests in a large-scale web architecture is inevitable.
+Multiple users access the application at the same time, creating large numbers of independent requests.
+In consequence, application servers are components that must cope with a high degree of concurrency.
+The main issues we want to address in this chapter are the implications and consequences of different 
+concurrency paradigms when used for business logic of application servers. 
+This not just includes the impact of handling state in concurrent applications, 
+but also the simplicity and accessibility of the particular paradigms for developers.
+
+<P>
+Moreover, we are not focusing on specific application server implementations or web application frameworks.
+Instead, we have a more general showdown with concurrency and paradigms for concurrent programming. 
+The reflections are applicable for distributed and concurrent programming in general.
+Eventually, we are in search of an appropriate programming abstraction for the inherent concurrency of an  application that allows us to develop scalable and performant applications, but tames the trouble
+of concurrency at the same time.

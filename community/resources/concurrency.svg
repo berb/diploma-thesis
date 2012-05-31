@@ -1,0 +1,97 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!-- Created with Inkscape (http://www.inkscape.org/) -->
+
+<svg
+   xmlns:dc="http://purl.org/dc/elements/1.1/"
+   xmlns:cc="http://creativecommons.org/ns#"
+   xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#"
+   xmlns:svg="http://www.w3.org/2000/svg"
+   xmlns="http://www.w3.org/2000/svg"
+   version="1.1"
+   width="1920"
+   height="1080"
+   id="svg2985">
+  <defs
+     id="defs2987" />
+  <metadata
+     id="metadata2990">
+    <rdf:RDF>
+      <cc:Work
+         rdf:about="">
+        <dc:format>image/svg+xml</dc:format>
+        <dc:type
+           rdf:resource="http://purl.org/dc/dcmitype/StillImage" />
+        <dc:title></dc:title>
+      </cc:Work>
+    </rdf:RDF>
+  </metadata>
+  <g
+     id="layer1">
+    <text
+       x="670"
+       y="190"
+       id="text2993"
+       xml:space="preserve"
+       style="font-size:80px;font-style:normal;font-variant:normal;font-weight:bold;font-stretch:normal;line-height:125%;letter-spacing:0px;word-spacing:0px;fill:#000000;fill-opacity:1;stroke:none;font-family:Arial;-inkscape-font-specification:Sans Bold"><tspan
+         x="670"
+         y="190"
+         id="tspan2995"
+         style="font-size:108px">Concurrency</tspan></text>
+    <text
+       x="32.273438"
+       y="791.51044"
+       id="text2993-2"
+       xml:space="preserve"
+       style="font-size:60px;font-style:normal;font-variant:normal;font-weight:bold;font-stretch:normal;line-height:125%;letter-spacing:0px;word-spacing:0px;fill:#000000;fill-opacity:1;stroke:none;font-family:Arial;-inkscape-font-specification:Sans Bold"><tspan
+         x="32.273438"
+         y="791.51044"
+         id="tspan2995-0"
+         style="font-size:60px">Sequential</tspan></text>
+    <text
+       x="472.27344"
+       y="791.51044"
+       id="text2993-2-4"
+       xml:space="preserve"
+       style="font-size:60px;font-style:normal;font-variant:normal;font-weight:bold;font-stretch:normal;line-height:125%;letter-spacing:0px;word-spacing:0px;fill:#000000;fill-opacity:1;stroke:none;font-family:Arial;-inkscape-font-specification:Sans Bold"><tspan
+         x="472.27344"
+         y="791.51044"
+         id="tspan2995-0-7"
+         style="font-size:60px">Declarative</tspan></text>
+    <text
+       x="932.27338"
+       y="791.51044"
+       id="text2993-2-8"
+       xml:space="preserve"
+       style="font-size:60px;font-style:normal;font-variant:normal;font-weight:bold;font-stretch:normal;line-height:125%;letter-spacing:0px;word-spacing:0px;fill:#000000;fill-opacity:1;stroke:none;font-family:Arial;-inkscape-font-specification:Sans Bold"><tspan
+         x="932.27338"
+         y="791.51044"
+         id="tspan2995-0-2"
+         style="font-size:60px">Message-passing</tspan></text>
+    <text
+       x="1532.2734"
+       y="791.51044"
+       id="text2993-2-9"
+       xml:space="preserve"
+       style="font-size:60px;font-style:normal;font-variant:normal;font-weight:bold;font-stretch:normal;line-height:125%;letter-spacing:0px;word-spacing:0px;fill:#000000;fill-opacity:1;stroke:none;font-family:Arial;-inkscape-font-specification:Sans Bold"><tspan
+         x="1532.2734"
+         y="791.51044"
+         id="tspan2995-0-3"
+         style="font-size:60px">Shared-state</tspan></text>
+    <path
+       d="m 198.41709,723.33333 549.08291,-510"
+       id="path3075"
+       style="fill:none;stroke:#000000;stroke-width:10;stroke-linecap:round;stroke-linejoin:round;stroke-miterlimit:4;stroke-opacity:1;stroke-dasharray:none" />
+    <path
+       d="m 648.33333,723.33333 294.16664,-510"
+       id="path3075-0"
+       style="fill:none;stroke:#000000;stroke-width:10;stroke-linecap:round;stroke-linejoin:round;stroke-miterlimit:4;stroke-opacity:1;stroke-dasharray:none" />
+    <path
+       d="m 1156.7851,723.33333 -59.2852,-510"
+       id="path3075-1"
+       style="fill:none;stroke:#000000;stroke-width:10;stroke-linecap:round;stroke-linejoin:round;stroke-miterlimit:4;stroke-opacity:1;stroke-dasharray:none" />
+    <path
+       d="m 1680.5228,723.33333 -473.8561,-510"
+       id="path3075-9"
+       style="fill:none;stroke:#000000;stroke-width:10;stroke-linecap:round;stroke-linejoin:round;stroke-miterlimit:4;stroke-opacity:1;stroke-dasharray:none" />
+  </g>
+</svg>

@@ -1,0 +1,26 @@
+<title>7. Recommendations</title>
+
+<meta charset="utf-8">
+
+<link rel="stylesheet" href="../style.css">
+
+<link rel="prev" href="064_summary.html"> 
+<link rel="next" href="071_webserv.html"> 
+
+<script src="../script.js"></script>
+
+<h2 id="recom">7. Recommendations</h2>
+
+<p>
+We have reviewed different concepts for concurrency and concurrent programming for components of a scalable
+web architecture in the previous three chapters. We will summarize our results by providing recommendations
+for each stage. As we have reviewed the components with varying details, also the scope of the advices differ. 
+Understanding the implications of different server architectures helps to provide insights on the 
+expected performance.</p>
+
+<p>
+The application logic represents the core of a web application. It is usually the part of the architecture that contains the specific code implemented by own developers.    
+Application code is often based on web frameworks or application containers. 
+We limit our guidelines to concurrency concepts for this component.  
+For distributed database systems, the impacts of different consistency guarantees and data models are in 
+our main focus.</p>

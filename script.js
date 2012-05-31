@@ -9,10 +9,7 @@ var languages = {
 var l10n = {
     "en": {
         "draftEdition": "Draft edition",
-        "draftNotice": "This edition of the book is a work in progress.<br> Please\
-            create <a href='https://github.com/oreilly/couchdb-guide/pulls'>a \
-            pull request</a> or <a href='http://github.com/oreilly/couchdb-guide/issues'>\
-            report an issue</a> for any corrections or suggestions you may have.",
+        "draftNotice": "This is the community edition. Please <a href='http://github.com/berb/diploma-thesis/issues/'>create a ticket or pull request</a> for any corrections, suggestions and enhancements. ",
         "edition": "Edition",
         "editionNotice": "This is the original version of the thesis. There is also an <a href='#'>alternative version</a> that can be collaboratively extended.",
         "footer": "Diploma Thesis by <a href='http://www.benjamin-erb.de'>Benjamin Erb</a>, released under a <a href='http://creativecommons.org/licenses/by/3.0/de/'>Creative Commons</a> license",
@@ -55,7 +52,7 @@ var urls = [
     [".*/editions/([0-9]+)/([a-z]{2})/([a-z]+).html", "build_edition"],
     [".*/draft/([a-z]+).html", "build_draft"],
     [".*/original/([0-9]+_)?([a-z]+).html", "build_edition"],
-    [".*/latest/([0-9]+_)?([a-z]+).html", "build_draft"],
+    [".*/community/([0-9]+_)?([a-z]+).html", "build_draft"],
     [".*/index.html", "build_index"]
 ];
 

@@ -1,0 +1,244 @@
+<title>6.2 Internals of Distributed Database Systems</title>
+
+<meta charset="utf-8">
+
+<link rel="stylesheet" href="../style.css">
+
+<link rel="prev" href="061_challenge.html"> 
+<link rel="next" href="063_types.html"> 
+
+
+<script src="../script.js"></script>
+
+<h2 id="61">6.2 Internals of Distributed Database Systems</h2>
+
+<p>Developing distributed database systems is not a simple task, and it requires concepts from both the database community and the distributed systems community. In our brief overview, we examine additional building blocks that are necessary when designing databases with distribution support. We also list some replication and partitioning strategies for distributed database systems. 
+
+<h3 id="blocks">Building Blocks</h3>
+<p>Hellerstein and Stonebraker provide a very comprehensible introduction to 
+traditional database internals&nbsp;[<A
+ HREF="0_bibliography.html#Hellerstein2007">Hel07</A>].
+Such internals include indexes and data structures, I/O handling components, transaction handling, concurrency control, query processing and client communication interfaces.
+As these concepts are common for database systems, we focus on some of the necessary building blocks for distributed database systems instead, including transaction management, concurrency control, data versioning, interfaces, and scalable data partitioning and parallel data processing. 
+ 
+ 
+<h4 id="distributed">Distributed Transaction Management</h4>
+<p>In a non-distributed scenario, handling concurrent transactions is generally easier, 
+because everything happens locally on a single machine. 
+Distributed transactions handle operations with transactional behavior between multiple nodes.
+Thus, a transaction in a distributed system must either be applied to all participating nodes, or 
+to no one at all.
+Distributed transactions are more difficult to implement due to the risk of network errors, (partial) failures of nodes and non-locality.
+A basic component for distributed transactions is a coordinating service that manages and coordinates
+transactions between all participants, based on a transaction protocol.
+
+<P>
+Popular protocols are the 2PC&nbsp;[<A
+ HREF="0_bibliography.html#Lampson1979">Lam79a</A>] and the 3PC&nbsp;[<A
+ HREF="0_bibliography.html#Skeen1983">Ske83</A>]. 2PC separates a voting phase
+and a completion phase, but it is blocking and not fault-tolerant.
+3PC addresses the drawbacks of 2PC by additional coordination steps.
+However, 3PC cannot cope with network partitions.
+
+<P>
+Alternatively, quorum-based voting protocols can be used for committing transactions in distributed setups&nbsp;[<A
+ HREF="0_bibliography.html#Skeen1982">Ske82</A>]. 
+The underlying idea is to mark a transaction as executed, when the majority of nodes have executed it. So either
+the abort quorum or the commit quorum must be obtained for termination. 
+The Paxos&nbsp;[<A
+ HREF="0_bibliography.html#Lamport1998">Lam98</A>] protocol family provides consensus solving that can be used for quorum-based voting.  
+
+
+<h4 id="concurrency">Concurrency Control and Data Versioning</h4>
+<p>The inherent parallelism states a problem for distributed database systems, 
+especially when concurrent write operations are allowed on different nodes.
+In particular, relaxed consistency guarantees and the acceptance of network partitions 
+require concepts for data versioning and controlling concurrent operations on data.
+
+<P>
+Distributed concurrency control mechanisms can be generally divided into pessimistic and optimistic
+algorithms and--ortoghonally--into locking-based, timestamp-based or hybrid algorithms.  
+Pessimistic algorithms provide conflict prevention by strict coordination of concurrent transactions, 
+while optimistic algorithms do not expect regular conflicts and delay conflict checking to the end of 
+a transaction life-cycle. 
+Locking-based algorithms use explicit locks for operations in order to prevent conflicts. Popular 
+locking-based algorithms include traditional two-phase-locking&nbsp;[<A
+ HREF="0_bibliography.html#Eswaran1976">Esw76</A>] and its variants.
+Also quorum-based voting can be applied, using read and write quorums for the corresponding operations&nbsp;[<A
+ HREF="0_bibliography.html#Gifford1979">Gif79</A>].
+
+<P>
+Distributed database systems also take advantage of timestamp-based concurrency control
+mechanisms, such as MVCC&nbsp;[<A
+ HREF="0_bibliography.html#Bernstein1981">Ber81</A>,<A
+ HREF="0_bibliography.html#Reed1978">Ree78</A>]. We have already encountered MVCC
+as an underlying implementation for STM systems in chapter&nbsp;<A HREF="node118.html#cha:capp">:autorefchapter5</A>.   
+Timestamp-based mechanisms use logical clocks to identify either data changes or transactions over time. 
+The logical ordering allows to reason about the sequence of operations and to protect from conflicts. 
+Several distributed database systems use vector clocks&nbsp;[<A
+ HREF="0_bibliography.html#Lamport1978">Lam78</A>] for versioning data entries
+in face of a network partition&nbsp;[<A
+ HREF="0_bibliography.html#DeCandia2007">DeC07</A>]. 
+The version history then allows to reason about conflicts and facilitate merges. 
+
+<h4 id="api">Data Interfaces and APIs</h4>
+<p>Traditional database systems are sometimes entirely embedded into an application, or they use arbitrary 
+protocols for access. Software components such as JDBC or ODBC abstract from concrete 
+database protocols and supply generic APIs. 
+For distributed database systems, interfaces for remote access are obligatory. Hence, established 
+distributed technologies for communication and data serialization are often integrated from the beginning.
+These technologies facilitate application integration and testing.  
+
+<P>
+Database calls and queries are often dispatched using RPC invocations or HTTP requests. The RPC approach
+uses framework bindings like Thrift&nbsp;[<A
+ HREF="0_bibliography.html#Agarwal2007">Aga07</A>]. 
+Data is interchanged using serialization technologies such as 
+<a href="http://thrift.apache.org/">Thrift's own serialization</a> or 
+<a href="http://code.google.com/p/protobuf/">Google's Protocol Buffers</a>.
+HTTP-based APIs often emulate some of the REST principles. 
+For serialization, formats like JSON, <a href="http://bsonspec.org/">BSON</a> (a binary JSON representation) or XML are then used. 
+While low-level RPC calls generally provide a slightly better performance due to less overhead, the usage of HTTP-based APIs introduces HTTP concepts like caching for free.
+
+<h4 id="partitioning">Scalable Data Partitioning</h4>
+
+<div class="figure" id="figure/2">
+<img src="resources/cons_hash.svg" style="width:100%">
+<p class="caption">Figure 6.2: Consistent hashing maps nodes and data items into the same ring for partitioning. The left illustration shows a set of data items (gray) mapped to three nodes. On the right side, the additional Node D has joined the system and is also mapped into the ring. As a consequence, only a small sector of the ring is affected from repartitioning. Node D takes over two data items that have formerly been assigned to Node A.</p>
+</div>
+
+<P>
+Allocating large amounts of data to a number of nodes becomes more complex, if data scalability is required
+and the number of available nodes changes. 
+Scaling out means supplying additional nodes, often at runtime in the first place.
+Sometimes, also scaling back to less nodes is interesting, when the amount of data decreases. 
+Appropriate strategies are required, how to partition and how to allocate data when scaling in and out.
+
+<P>
+Traditional setups with a fixed number of hosts often allocate data by applying a hash function 
+on a data item (e.g. the key), then using the result <SPAN  CLASS="textit">modulo</SPAN> the number of nodes in order to calculate
+the node responsible for the item. 
+The strategy is straightforward, but it fails when the number of nodes changes. Recalculating and redistributing
+all items due to changed partitioning keys is then necessary, but not reasonable in practice. 
+One way to approach this problem is consistent hashing&nbsp;[<A
+ HREF="0_bibliography.html#Karger1997">Kar97</A>]. 
+The fundamental idea of consistent hashing is to hash data items and nodes into a common ring using the same hash function. 
+The algorithm determines that each data item has to be stored by the next clockwise adjacent node in the ring, as shown in <a href="#figure/2">figure 6.2</a>.
+When new nodes are added to the ring, or nodes leave the ring, a small sector of the ring is affected
+and only the data items in this sector must be reallocated.  
+In essence, consistent hashing is a partitioning strategy that works with varying number of nodes and provides
+a consistent mapping that prevents an unnecessary reallocating of data when the amount of nodes scales.
+
+<h4 id="parallel">Parallel Data Processing</h4>
+<p>Processing data entries in a distributed database system is necessary for several operations. 
+For instance, generating indexes requires the execution of the same operations on all data entries and machines. 
+In several non-relational database systems, it is the developer's task to implement index generating, 
+hence appropriate programming models are required for such <SPAN  CLASS="textit">embarrassingly parallel</SPAN> tasks.
+
+<div class="figure" id="figure/3">
+<img src="resources/mapreduce.svg" style="width:100%">
+<p class="caption">Figure 6.3: A schematic illustration of the phases of a MapReduce computation. The <TT>map()</TT> function is applied to all items and produces intermediate results. Grouped by their key, these intermediate results get merged using the <TT>reduce()</TT> function.</p>
+</div>
+
+
+<P>
+A popular approach is the MapReduce model&nbsp;[<A
+ HREF="0_bibliography.html#Dean2008">Dea08</A>], which is inspired by functional programming languages. It separates parallel processing of possibly large data sets into two steps, as shown in <a href="#figure/2">figure 6.3</a>.
+The <TT>map</TT> function takes data entries and emits intermediate key-value pairs. 
+Next, all intermediate pairs are grouped by keys. The <TT>reduce</TT> function is then applied to 
+all intermediate pairs with the same key, yielding simple values as a result.
+Distribution, coordination and execution is managed by the framework resp. database system, so the developer
+only has to provide the map and reduce function. This principle easily allows tasks such as counting or sorting on large data sets. 
+MapReduce is also used for building indexes, either using the sorted intermediate key-value pairs, 
+or using the sorted reduced results.
+
+<h3 id="strategies">Replication and Partitioning Strategies</h3>
+<p>Replication and partitioning are necessary concepts for distributed database systems. Replication is 
+responsible for data distribution between nodes. On the basis of replication, availability can be increased
+and fail-over mechanisms can be deployed for fault-tolerance. Replication can also help to scale read operations.
+Partitioning deals with the challenge of scaling out large amounts of data.
+
+<h4 id="replication">Replication</h4>
+<p>There are various forms of replication for distributed systems, but not all are applicable for database systems
+that target availability and highly concurrent access.
+Replication mechanisms can be either synchronous or asynchronous, active or passive, and they have
+different propagation characteristics&nbsp;[<A
+ HREF="0_bibliography.html#Dollimore2005">Dol05</A>,<A
+ HREF="0_bibliography.html#Moiz2011">Moi11</A>]. 
+
+<P>
+<SPAN  CLASS="textit">Synchronous replication</SPAN> provides
+atomic semantics for operations, that are backed by all running replicas. 
+This requires distributed transaction protocols for coordination.
+<SPAN  CLASS="textit">Asynchronous replication</SPAN> allows a single node to acknowledge an operation independently. 
+Other nodes will eventually receive the updates. But, as opposed to synchronous replication, 
+immediate updates of all nodes are not guaranteed. Asynchronous replication works either  
+periodically or aperiodically.  
+
+<P>
+In <SPAN  CLASS="textit">active replication</SPAN>, all nodes receive and process a request (e.g. write operation), 
+and coordinate their response.
+<SPAN  CLASS="textit">Passive replication</SPAN> favors a designated primary that processes the request and updates the other nodes afterwards. In case of a fail-over, a secondary takes over the service.
+
+<P>
+The propagation aspects determine, how read and write operations from clients are handled, and how updates
+disseminate to the replicas. In a <SPAN  CLASS="textit">master-slave</SPAN> setup, writes are processed by a single master.
+As web applications tend to issue more read requests than write requests, many setups take advantage of this
+inherent property and provide a single master server and multiple slaves&nbsp;[<A
+ HREF="0_bibliography.html#Schwartz2008">Sch08</A>]. 
+The master server is solely issued  for write requests, and all read requests are load-balanced 
+to one of the slaves. 
+Obviously, this setup does only help to scale read operations, but not write operations.
+A <SPAN  CLASS="textit">multi-master</SPAN> setup allows multiple nodes to accept writes. This indeed increases write scalability.
+However, it requires conflict management strategies, as simultaneous writes on the same data may lead to inconsistencies.   
+<SPAN  CLASS="textit">Quorum-based</SPAN> systems&nbsp;[<A
+ HREF="0_bibliography.html#Gifford1979">Gif79</A>] allow to fine tune, how many replicas must be accessed for reading operations, how many replicas store the data, and how many replicas must 
+acknowledge update operations. These three parameters directly affect the strengths of consistency and fault-tolerance. In <a href="#figure/4">figure 6.4</a>, we can see two exemplary replication strategies in use for web applications.
+
+<div class="figure" id="figure/4">
+<img src="resources/replication.svg" style="width:100%">
+<p class="caption">Figure 6.4: Two replication setups for the backend of web application.
+On the left side, we can see a master-slave setup that is often used by MySQL. The master handles
+writes and asynchronously updates the slaves. Read requests are load-balanced to the slaves.
+On the right side, a common replication setup for CouchDB is depicted. Multiple masters handle all requests
+and perform asynchronous merge replication that might require conflict resolution.</p>
+</div>
+
+<P>
+Common replication strategies include snapshot replication, transactional replication, merge replication and statement-based replication&nbsp;[<A
+ HREF="0_bibliography.html#Moiz2011">Moi11</A>]. Snapshot replication is based on periodic copying of all data entries. These snapshots are then forwarded and applied on replicas. 
+Transactional replication employs a transactional behavior for changes using distributed transactions between servers. 
+Merge replication allows for partition tolerance and offline nodes, since it synchronizes data when nodes
+eventually become available. Conflict resolution strategies are necessary to handle conflicting changes. 
+Statement-based replication forwards database queries to replicas. Read queries can be forwarded to a single instance, while queries including write operations are forwarded to all instances.   
+
+
+<h4 id="partitioning">Partitioning</h4>
+<P>
+There are different partitioning approaches for scaling out large amounts of data: functional, vertically and horizontal&nbsp;[<A
+ HREF="0_bibliography.html#Allspaw2008">All08</A>,<A
+ HREF="0_bibliography.html#Schwartz2008">Sch08</A>]. <SPAN  CLASS="textit">Functional partitioning</SPAN> separates distinct parts of the application data that are not dependent on each other. For instance, customer data, product data and inventory data are not just stored in different tables, but can also be stored on different instances of database nodes.      
+<SPAN  CLASS="textit">Vertical partitioning</SPAN> targets data partitioning, that is the efficient allocation of a complex data row into tables. 
+Normalization and denormalization are typical mechanisms for vertical partitioning. 
+For instance, "row splitting" separates a single table into multiple tables, thereby separating columns that
+change often from columns that are rather static. Such a split can also improve performance.
+<SPAN  CLASS="textit">Horizontal partitioning</SPAN>, also known as sharding, addresses the problem of large numbers of rows in a table. 
+Instead of splitting existing rows across columns, an existing table is split into several structurally equivalent tables and the rows are portioned.   
+While partitioning improves performance in many cases and makes large amounts of data more manageable, it has also some drawbacks. Providing a consistent logical view on partitioned data sets often requires multiple join operations or even merge operations on application level.  
+As a result, finding the partitions, both vertical and horizontal, is often not trivial and requires specific knowledge, 
+how the data is accessed and used by the application. 
+
+<P>
+The design of shards heavily influences the performance for finding and retrieving data. Thus, the partitioning
+strategy in use affects the system. Partitioning is usually realized using a partitioning key that allocates rows to shards. 
+When <SPAN  CLASS="textit">hash partitioning</SPAN> is used, the result of a hash function applied to the key states which shard should be used. <SPAN  CLASS="textit">List partitioning</SPAN> provides a fixed mapping of keys to shards. 
+Similarly, <SPAN  CLASS="textit">range partitioning</SPAN> assigns numerical ranges to shards.   
+Combining different criteria is called <SPAN  CLASS="textit">composite partitioning</SPAN>. For instance, the aforementioned mechanism of consistent hashing can be considered as a combination of hash and list partitioning.  
+
+<P>
+Although we explained partitioning using tables, rows and columns, most of the concepts are valid for non-relational database systems as well. A storage organization solely based on keys makes this concept even more apparent.
+
+<p>Replication, data partitioning and sharding represent orthogonal concepts, and they are partially contradictory.
+However, in large-scale database systems, all of these concepts are inevitable as fundamental mechanisms.
+Otherwise, systems could not be able to accept huge amounts of data and simultaneous read/write requests,
+deal with faults or provide low latency responses at the same time. Hence, deliberate trade-offs are required in practice.

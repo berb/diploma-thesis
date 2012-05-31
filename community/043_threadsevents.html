@@ -1,0 +1,376 @@
+<title>4.3 The Case of Threads vs. Events</title>
+
+<meta charset="utf-8">
+
+<link rel="stylesheet" href="../style.css">
+
+<link rel="prev" href="042_serverarch.html"> 
+<link rel="next" href="044_summary.html"> 
+
+<script src="../script.js"></script>
+
+<h2 id="43">4.3 The Case of Threads vs. Events</h2>
+<p>We have outlined a special set of requirements for our servers such as statelessness. 
+This eases not just actual implementations, but it also biases our considerations of threads vs. events to some extent.
+In <a href="index.html#chapter/5">chapter 5</a>, we will focus on concurrent programming from a more general perspective. 
+For the rest of this chapter, we take some time for a closer look on the general argument of threads vs. events.
+The discussion is a very old one that emerged long ago in the field of operating systems. 
+However, high performance network servers have always been a challenging topic and the argument has been repeatedly revisited several times
+in this context.
+
+<P>
+We introduce the duality argument of Lauer and Needham that reasons the intrinsic relationship between threads and events. Then, we
+review some of the more recent publications comparing both models or campaigning for one of them, often
+painting black the other one at the same time.
+Finally, we provide a neutral view on both models and conclude on their strengths and weaknesses.   
+
+<h3 id="duality">The Duality Argument</h3>
+<p>In the late seventies, Lauer and Needham&nbsp;[<A
+ HREF="0_bibliography.html#Lauer1979">Lau79</A>] took an extensive look on two predominant programming models for operating
+system designs in terms of processes and synchronization and communication. 
+More precisely, they compare message-oriented systems with procedure-oriented systems. The former uses a small number of processes
+that use explicit messaging, and the latter is based on large numbers of small processes using shared data instead.
+Thus, message-oriented systems resemble event-driven systems, while procedure-oriented systems correspond to thread-based systems&nbsp;[<A
+ HREF="0_bibliography.html#Behren2003">vB03a</A>,<A
+ HREF="0_bibliography.html#Li2007">Li07</A>].
+Their main contribution are three important observations: 
+
+<P>
+
+<OL>
+<LI>Both models are <SPAN  CLASS="textit">duals of each other</SPAN>. A program written in one model can be mapped directly to an equivalent program based on the other model.
+</LI>
+<LI>Both models are <SPAN  CLASS="textit">logically equivalent</SPAN>, although they use diverging concepts and provide a different syntax.
+</LI>
+<LI>The <SPAN  CLASS="textit">performance</SPAN> of programs written in both models is essentially <SPAN  CLASS="textit">identical</SPAN>, given that identical scheduling strategies are used.
+</LI>
+</OL>
+
+<P>
+Consequently, Lauer and Needham come up with a mapping of both models, allowing to confront building blocks of both concepts. The most important mappings are shown in <a href="#table/3">table 4.3</a>. 
+
+
+
+<div class="figure" id="table/3">
+
+<table>
+
+<thead>
+
+<TR>
+
+<TH ALIGN="right"><SPAN  CLASS="textbf">thread-based</SPAN></TH>
+<TH ALIGN="CENTER"></TH>
+<TH ALIGN="left"><SPAN  CLASS="textbf">event-driven</SPAN></TH>
+</TR>
+
+</thead>
+
+<tbody>
+<TR><TD ALIGN="RIGHT">monitor</TD>
+<TD ALIGN="CENTER"><SPAN CLASS="MATH">~</SPAN></TD>
+<TD ALIGN="LEFT">event handler</TD>
+</TR>
+<TR><TD ALIGN="RIGHT">scheduling</TD>
+<TD ALIGN="CENTER"><SPAN CLASS="MATH">~</SPAN></TD>
+<TD ALIGN="LEFT">event loop</TD>
+</TR>
+<TR><TD ALIGN="RIGHT">exported functions</TD>
+<TD ALIGN="CENTER"><SPAN CLASS="MATH">~</SPAN></TD>
+<TD ALIGN="LEFT">event types accepted by event handler</TD>
+</TR>
+<TR><TD ALIGN="RIGHT">returning from a procedure</TD>
+<TD ALIGN="CENTER"><SPAN CLASS="MATH">~</SPAN></TD>
+<TD ALIGN="LEFT">dispatching a reply</TD>
+</TR>
+<TR><TD ALIGN="RIGHT">executing a blocking procedure call</TD>
+<TD ALIGN="CENTER"><SPAN CLASS="MATH">~</SPAN></TD>
+<TD ALIGN="LEFT">dispatching a message, awaiting a reply</TD>
+</TR>
+<TR><TD ALIGN="RIGHT">waiting on condition variables</TD>
+<TD ALIGN="CENTER"><SPAN CLASS="MATH">~</SPAN></TD>
+<TD ALIGN="LEFT">awaiting messages</TD>
+</TR>
+</tbody>
+
+</table>
+
+<p class="caption">Table 4.3: A mapping of thread-based and event-driven concepts based on Lauer and Needham&nbsp;[<A
+ HREF="0_bibliography.html#Lauer1979">Lau79</A>], adapted and restated to resemble event-driven systems&nbsp;[<A
+ HREF="0_bibliography.html#Behren2003">vB03a</A>,<A
+ HREF="0_bibliography.html#Li2007">Li07</A>].</p>
+</div>
+
+
+<P>
+The flow of control
+in an application using either one of the models generates a unique graph that contains certain yielding or blocking nodes (e.g. awaiting a reply resp. a procedure return). 
+The edges between such nodes represent code that is executed when traversing the graph.
+According to the duality argument, both thread-based and event-driven programs yield the same blocking points,
+when equivalent logic is implemented and the programs are thus duals. 
+Von Behren refers to this graph representation as a blocking graph&nbsp;[<A
+ HREF="0_bibliography.html#Behren2003">vB03a</A>].   
+
+<P>
+Lauer and Needham argue that by replacing concepts and transforming a program from one model into the other,
+the logic is not affected and the semantic content of the code is thus invariant. 
+As a result, they claim that both conceptual models are equivalent and even the performance of both
+models is the same, given a proper execution environment. 
+As a consequence, they suggest that the choice of the right model depends on the actual application,
+and neither model is preferable in general. 
+
+<P>
+While the general concepts are accepted to be comparable&nbsp;[<A
+ HREF="0_bibliography.html#Behren2003">vB03a</A>,<A
+ HREF="0_bibliography.html#Li2007">Li07</A>], there is also some criticism to the mapping, especially when it is applied to event-based systems that mix in other programming concepts.
+Von Behren&nbsp;[<A
+ HREF="0_bibliography.html#Behren2003">vB03a</A>] points out that Lauer and Needham ignore cooperative scheduling for event-based systems, which is an important
+part of many event-driven systems today.
+Lauer and Needham also disallow any kind of shared memory or global data in their mapping. 
+But many event-driven systems indeed use shared memory in a few places.    
+
+<P>
+Despite these remarks, the duality argument generally allows us to relax our considerations on both
+systems in terms of intrinsic performance characteristics. In fact, we can focus on the applicability
+and suitability of both models based on actual requirements of an application. 
+Furthermore, the duality argument motivates us to question the implementation of the models 
+instead of the models themselves when it comes to performance and scalability.     
+
+<P>
+Next, we have a look at some popular pleadings for one model or the other, complemented by a compilation
+of prevalent criticism for each model. 
+
+<h3 id="threads">A Case for Threads</h3>
+<p>Proponents of threads argue that threads are the natural extension of the dominant sequential programming
+style in most programming languages for providing concurrency&nbsp;[<A
+ HREF="0_bibliography.html#Behren2003">vB03a</A>,<A
+ HREF="0_bibliography.html#Behren2003a">vB03b</A>,<A
+ HREF="0_bibliography.html#Gustafsson2005">Gus05</A>].
+From a developer perspective, threads map work to be executed with associated flows of control.
+More precisely, a thread represents work from the perspective of the task itself. This allows to 
+develop concurrent code while focusing on the sequential steps of operations required to complete the task.
+Transparently executing blocking operations and I/O calls relieves the developer from low-level
+scheduling details. Instead, he can rely on the operating system and the runtime environment.
+
+<P>
+Threads are well-known and understood entities of operating systems and are general purpose primitives
+for any kind of parallelism.
+Threads are also mandatory for exploiting true CPU concurrency. Hence, even other concurrency approaches
+rely on underlying, thread-based implementations, although they hide this trait from the developer.
+
+<P>
+The abstraction that threads provide appears to be simple and especially powerful when tasks
+are mostly isolated and only share a limited amount of state (cf. multi-threaded web servers).
+Threads also provide a solid structuring  primitive for concurrent applications in terms of syntax. 
+
+<p>
+The opponents of thread-based systems line up several drawbacks. 
+For Ousterhout, who probably published the most well-known rant against threads&nbsp;[<A
+ HREF="0_bibliography.html#Ousterhout1996">Ous96</A>],
+the extreme difficulty of developing correct concurrent code--even for programming experts--is
+the most harmful trait of threads. As soon as a multi-threaded system shares a single state between multiple
+threads, coordination and synchronization becomes an imperative. 
+Coordination and synchronization requires locking primitives, which in turn brings along additional issues.
+Erroneous locking introduces deadlocks or livelocks, and threatens the liveness of the application.
+Choosing the right locking granularity is also source of trouble. Too coarse locks slow down concurrent
+code and lead to degraded sequential execution. By contrast, too fine locks increase the danger of 
+deadlocks/livelocks and increase locking overhead.
+Concurrent components based on threads and locks are not composable.
+Given two different components that are thread-safe, a composition of them is not thread-safe per se.
+For instance, placing circular dependencies between multi-threaded components unknowingly can 
+introduce severe deadlocks.
+
+<P>
+Lee&nbsp;[<A
+ HREF="0_bibliography.html#Lee2006">Lee06</A>] focuses on the lack of understandability and predictability of multi-threaded code, due to
+nondeterminism and preemptive scheduling.     
+Multithreading appears to be error-prone, and very difficult to debug.
+The state explosion as a result from all possible interleavings of multiple threads renders 
+a reasonable execution analysis of concurrent code virtually impossible. 
+This is primarily caused by the unpredictability of preemptive scheduling.
+So, contrary to von Behren&nbsp;[<A
+ HREF="0_bibliography.html#Behren2003">vB03a</A>], Lee argues that threads are precisely not a good abstraction for concurrent flows of execution. 
+Quite the opposite, the oversimplifying abstraction of threads appears to be misleading, as it pretends a continuous execution of code that may not match any real runtime behavior.   
+
+<P>
+Concerning performance, we have already got to know the downside of extensive context switching. 
+Similarly, huge numbers of threads require large amounts of memory due to their thread stacks.
+The usage of locks yields an additional overhead.    
+
+<P>
+In return, the pro-thread camp argues that a couple of the drawbacks mentioned are actually the result of poor threading library implementations and the essence of preemptive scheduling.   
+
+
+<h3 id="events">A Case for Events</h3>
+<p>The campaigners for events like Ousterhout[<A
+ HREF="0_bibliography.html#Ousterhout1996">Ous96</A>] regard event-driven systems as the more appropriate foundation for high concurrency servers when compared to thread-based systems.
+The fundamental idea of a single-threaded event loop eases concurrency concerns by providing a simple,
+and straight model of parallelism. 
+
+<P>
+By not using blocking/synchronous I/O, multiple I/O operations overlap, although a single thread is used.
+This enables I/O parallelism without requiring CPU parallelism at the same time.
+This yields the illusion of multi-threaded concurrency, because multiple conceptual flows of execution
+appear to happen at the same time (at least their I/O operations do).  
+Event handler code and callbacks can be developed without the immanent fear of concurrent access on state.
+The execution of a callbacks is guaranteed to be deterministic, as long as no yielding operation
+is triggered in the callback. This provides a feeling of deterministic reasoning.
+Scheduling becomes an explicit operation and happens inside the application itself.
+Fine-grained tuning of scheduling is possible and can take into account application-specific requirements.
+
+<P>
+The usage of events and event handlers yields an asynchronous behavior, which is favored by some developers.
+Instead of giving the abstraction of an isolated sequential flow of executions, the asynchronous style
+makes the differences between I/O operations and CPU-bound operations obvious.    
+
+<p>However, there are also serious concerns over event-driven systems. The most common reason
+why event-driven systems are rejected is their programming style. The idea of an event loop
+and registered event handlers yields an inversion of control. 
+Instead of sequential operations, code is organized as a fragmented set of event handlers and callbacks.
+In non-trivial applications, this leads to heavy chaining of callbacks. 
+Gustafsson refers to the notion of an event loop sequentially executing callbacks 
+on events as a form of "delayed GOTO"&nbsp;[<A
+ HREF="0_bibliography.html#Gustafsson2005">Gus05</A>]. Compared to threads, that provide higher abstractions, 
+event-driven systems hence appear as a step backwards.
+
+<P>
+Existing sequential algorithms can not be used directly in event-driven systems. Instead, whenever an I/O
+operation is triggered, the code must be split up and moved into different callbacks, creating large
+cascading callback chains.    
+
+<P>
+The obfuscated control flow is often accompanied by the necessity of saving and restoring state 
+before yielding and after resuming. This is especially obvious when imperative, low-level programming languages
+are used that do not support mitigating language idioms like closures.
+A thread can store state as part of its thread stack, independently of any scheduling. In an event-driven 
+system, it is the developer's responsibility to handle and recover state between event handlers.
+
+<P>
+While threads are endangered by deadlocks or livelocks, single-threaded, event-driven applications can 
+be scuttled by long running, CPU-bound callbacks, blocking operations or callbacks that refuse to yield.
+
+<P>
+While the single-threaded event-loop model fits for mostly I/O-bound applications, it is very difficult
+by default to take advantage of real CPU concurrency and utilize multiple cores (cf. subsection <A HREF="node100.html#subsub:eda_sca">:autoref:<SMALL>TP </SMALL>4.2.2</A>).  
+
+
+<h3 id="conflation">A Conflation of Distinct Concepts</h3>
+<p>Another substantial argument for the case of threads vs. events has been made by Adya et al.&nbsp;[<A
+ HREF="0_bibliography.html#Adya2002">Ady02</A>].
+Debating about thread-based and event-based programming styles, they derive different management concepts
+that these programming styles make use of for concurrency. However, they argue that these concepts are often conflated and
+also confused with the actual programming styles themselves. Adya et al. state that this makes it harder to reason
+about appropriate approaches towards concurrent programming. The separation of concepts yields five
+distinct concepts, most of them orthogonal to each other.
+
+<h4 id="task">Task Management</h4>
+<p>The flows of execution within a program are often divided into separate tasks that coexist. Managing the concurrent execution of these tasks requires a management concept on how to switch between tasks like scheduling does. Serial task management sequentially runs a task to completition, then switching to the next task. While this strategy prevents state conflicts due to isolated execution, it does not allow to exploit true parallelism. Also, long-running tasks or tasks waiting for I/O will delay the execution of other pending tasks. Preemptive task management instead enables an overlapping execution of multiple tasks at the same time and makes use of multiple cores. However, tasks will be scheduled externally, thus a task is not aware of task management.
+
+<P>
+An interesting alternative is cooperative task management, preserving some of the advantages of both models. 
+Tasks yield cooperatively and explicitly, but make it still easier to reason about the code.
+Single-threaded cooperative task management facilitates to deal with invariants and state. 
+For multi-threaded code, cooperative task management often decreases the number of context switches.    
+
+<h4 id="stack">Stack Management</h4>
+<p>Another concept governs the relationship between flows of execution and associated states. 
+In a thread-based model, tasks have their own stacks, hence (automatic) stack management is an inherent feature.
+Systems based on events require a different handling of task stacks. As the flow of execution of a logical task is  in this case represented
+by a sequence of dispatched events and corresponding executions of event handlers, there is no direct notion of a stack.
+Moreover, different procedures handle the sequence of events corresponding to the logical task, 
+so state handling must be broken across several event handlers.
+As a result, the stack must be provided explicitly by the developer. Adya et al. refer to this duty as <SPAN  CLASS="textit">stack ripping</SPAN>.
+Before yielding, the stack of a task must be serialized and stored. When an event handler later continues the execution,
+it must first load and reconstruct the stack of the corresponding task.
+
+<P>
+Some functional languages such as Scheme provide languages idioms for that, like closures or continuations. 
+Closures are functions that encapsulate their referencing environment (i.e. "stack"). Continuations are special closures 
+used for encapsulating control state.  
+Most low-level languages such as C do not support these functional mechanisms, and stack ripping therefore remains as a mandatory workaround.
+
+<h4 id="io">I/O Management</h4>
+<p>I/O management is responsible for the I/O operations, and can be separated into synchronous and asynchronous
+management interfaces. We have already considered both concepts in detail earlier in this chapter.
+However, it is important to notice that I/O management and task management are orthogonal concepts.
+While computational operations may share state between tasks, this is generally not true for I/O. 
+Consequently, tasks executing I/O operations concurrently can be overlapped. 
+Furthermore, each of the task management concepts can be used either with a synchronous or asynchronous I/O
+management concept.
+
+<h4 id="conflict">Conflict Management</h4>
+<p>Different task management concepts provide specific agreements on the granularity of atomicity of operations.
+This is important for guaranteeing consistent data when state is shared between tasks.   
+Serial and to some extent (i.e. single-threaded) cooperative task management concepts provide a very simple form of conflict management.
+Serial tasks are exclusively executed, and cooperative tasks provide atomic semantics between all yielding operations. This makes it very easy to reason about invariants. 
+Ensuring that invariants hold is more complex for preemptive task management and requires synchronization mechanisms.
+
+<h4 id="data">Data Partitioning</h4>
+<p>We have seen that shared state and the preservation of consistency correlates to both task and conflict management. As a result, partitioning data and restrictively allowing access to state may reduce the possibilities of conflicts. For instance, thread-local state does not have to be shared and can be partitioned explicitly. 
+
+<h4 id="sweetspot">Looking for the Sweet Spots</h4>
+<p>Adya et al. propose the separation of management concepts to argue purposefully for the most convenient form of concurrent programming, aside from the
+coarse thread vs. event debate&nbsp;[<A
+ HREF="0_bibliography.html#Adya2002">Ady02</A>]. They pay special attention to the first two management principles. While traditional event-based systems
+are mostly based on cooperative task management and manual stack management requiring stack ripping, thread-based systems often use
+preemptive task management and automatic stack management. Eventually, they favor a model that makes use of cooperative task management,
+but releases the developer from the burden of stack management, as shown in <a href="#figure/5">figure 4.5</a>.
+Such a model eases concurrency reflections, requires minimal conflict
+management and harmonizes with both I/O management models.
+
+<div class="figure" id="figure/5">
+<img src="resources/sweetspot.svg" style="width:100%">
+<p class="caption">Figure 4.5: The sweet spot of task management and stack management by using cooperative task management and automatic stack management, according to Adya et al.&nbsp;[<A
+ HREF="0_bibliography.html#Adya2002">Ady02</A>].</p>
+</div>
+
+<P>
+Some of the recent event-driven systems such as node.js come very close to this intended model. 
+They rely on closures as language primitives that encapsulate stack data into callback functions, mitigating stack ripping efforts.   
+
+<P>
+Gustafsson&nbsp;[<A
+ HREF="0_bibliography.html#Gustafsson2005">Gus05</A>] comes to a similar result. It is not the nature of threads that make their
+usage cumbersome, but preemptive scheduling. A cooperative scheduling of threads eases much of the pain
+of threads. Non-preemptive scheduling let us preserve invariants without extensive locking. Gustafsson
+also backs Adya by noting that the question of threads or events is orthogonal to the question of 
+cooperative or preemptive scheduling. 
+
+<h3 id="conc">Conclusion</h3>
+<p>Before we value the different models, let us restate our original question. We are in search of appropriate
+programming models for high concurrency and high performance network servers, in our case web servers.
+
+<P>
+We had a detailed look on both thread-based and event driven approaches. We also learned about
+hybrid approaches such as SEDA, and highly optimized threading libraries that employ compiler
+optimizations for thread stack sizes and adaptive scheduling.
+We have seen that various servers using different approaches can be tuned and optimized to give at least
+roughly a similar performance. 
+
+<P>
+However, for large-scale connection concurrency, event-driven server architectures using asynchronous/non-blocking I/O operations seem to be more popular, as they provide a slightly better scalability under
+heavy concurrency. Such servers demand less memory, even when they handle thousands of concurrent connections.
+Also, they do not require specialized threading libraries. On the other hand, mature threading implementations
+such as the Native POSIX Thread Library&nbsp;[<A
+ HREF="0_bibliography.html#Molnar2003">Mol03</A>] still provide reasonable performance, 
+even for highly concurrent server implementations.  
+
+<P>
+Concerning the everlasting argument between the pro-threads camp and pro-events camp, we have seen
+that both programming models are actually duals of each other and can be transformed under certain restrictions.
+So the actual performances of a server using either one of the models depends to a large extent 
+on the real environment it is executed on, including the operating system and hardware features. 
+As the duality argument dates back to a time where asynchronous, non-blocking I/O operations, multi-core
+CPUs have not been available yet, the influence of the environment must not be underestimated. 
+
+<P>
+Next, we took a look behind the essence of threads and events, realizing that the different management concepts
+are often conflated, when arguing about both models.  
+It is primarily the cooperative scheduling nature that makes event-driven systems so interesting 
+for highly concurrent servers. 
+The downside of many low-level event-driven systems is the required effort for stack ripping, a concept
+that is not necessary for threads, as the thread stack frame encapsulates state.  
+Today, functional and multi-paradigm languages mitigate the problem of stack ripping by language idioms like
+closures. This allows a more decent programming style in event-driven systems, although the style is still
+very different compared to the sequential structuring of threads.
+

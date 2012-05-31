@@ -1,0 +1,29 @@
+<title>7.1 Selecting a Web Server Architecture</title>
+
+<meta charset="utf-8">
+
+<link rel="stylesheet" href="../style.css">
+
+<link rel="prev" href="070_index.html"> 
+<link rel="next" href="072_app.html"> 
+
+<script src="../script.js"></script>
+
+<h2 id="webserv">7.1 Selecting a Web Server Architecture</h2>
+
+<p>In <a href="index.html#chapter/4">chapter 4</a>, we have considered mechanisms for I/O handling and connection concurrency for web
+servers.
+Popular architectures that incorporate different I/O and concurrency mechanisms have been reviewed.    
+We have seen that sufficient performance result can be achieved with various models and there are solid implementations for most of them.
+In our architectural scenario, the web servers are challenged with highly concurrent connections, 
+extreme I/O parallelism, but virtually not shared state.
+In this particular case, event-driven architectures using asynchronous I/O tend to provide better scalability
+under load, by requiring less memory and gaining better CPU utilization. 
+Yet, this does not displace thread-based servers in general. 
+When web servers are used in general-purpose setups, perhaps also executing the application logic in the same server instance, thread-based web servers are still a valid contender.</p>
+
+<p>If there is the urgent necessity to implement a custom web server, the choice of the right concepts is often constrained by the platform and the programming language.
+If available, I/O multiplexing strategies (asynchronous/non-blocking) and cooperative scheduling 
+should be considered.    
+Also, low-level frameworks should be reviewed, as described in the evaluation part of <a href="index.html#chapter/4">chapter 4</a>. They often implement the basic building blocks of a network server and allow the developer to focus
+on protocol-dependant and application-specific features.</p>

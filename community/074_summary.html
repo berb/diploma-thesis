@@ -1,0 +1,24 @@
+<title>7.4 Summary</title>
+
+<meta charset="utf-8">
+
+<link rel="stylesheet" href="../style.css">
+
+<link rel="prev" href="073_pers.html"> 
+<link rel="next" href="080_index.html"> 
+
+<script src="../script.js"></script>
+
+<h2 id="summary">7.4 Summary</h2>
+
+
+<p>The main criteria for web server architectures are the extent of I/O operations, the necessity to handle state, and the required robustness for connection concurrency. 
+We have seen that it is advisable to consider I/O multiplexing strategies and cooperative scheduling for the web servers of our architecture.  
+
+<P>
+For concurrency concepts as part of application servers, it is important to identify the actual concurrency requirements. Reducing the latency of requests requires parallelization strategies of the request logic. 
+Coordinating different pending requests and sharing highly fluctuating and variable state inside application servers can either be handled using external backend components or high-level concurrency abstractions inside the application servers.
+
+<P>
+The choice for the appropriate storage backend depends on actual data model, the scalability requirements, and the consistency requirements of the application. Furthermore, polyglot persistence should be considered for large-scale web applications.
+
