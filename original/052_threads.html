@@ -1,0 +1,208 @@
+<title>5.2 Concurrency Based on Threads, Locks and Shared State</title>
+
+<meta charset="utf-8">
+
+<link rel="stylesheet" href="../style.css">
+
+<link rel="prev" href="051_overview.html"> 
+<link rel="next" href="053_stm.html"> 
+
+
+<script src="../script.js"></script>
+
+<h2 id="02">5.2 Concurrency Based on Threads, Locks and Shared State</h2>
+
+<P>
+Imperative programming, the most popular form of structured programming, is built around the notion of 
+sequential execution and mutable state. It directly deduces from the conceptions of the Von Neumann architecture.
+Threads are often regarded as a consequential extension of this notion that enable multiple flows of control simultaneously.
+Next to heavier processes, threads are the main constructs for parallelism provided by operating systems and hardware architectures (i.e. hyperthreading).  
+Unsurprisingly, threads are the prevailing building blocks for concurrency in most programming languages.
+However, concurrent programming based on threads, locks and shared state is said to be difficult and error-prone&nbsp;[<A
+ HREF="0_bibliography.html#Sutter2005">Sut05</A>].
+ 
+<h3 id="impl">The Implications of Shared and Mutable State</h3>
+<P>
+Conceptually, a thread describes a sequential flow of control, that is isolated from other activities at first glance. Unlike processes, threads share the same address space though. That implies that multiple independent
+threads may access the same variables and states concurrently. 
+Even worse, sequential programming is built on the concept of mutable state, which means that multiple threads may compete for write operations, too.
+Multithreading is principally used with preemptive scheduling. As a result, the exact switches and interleavings between multiple threads are not known in advance. This represents a strong form of indeterminacy. 
+Without further care, mutable state and indeterminacy introduce the strong hazard of race conditions.
+
+<P>
+A race condition occurs when two or more thread compete for access to critical section, a section that contains state shared between threads. Due to the variety of possible interleavings, the race condition may result in various inconsistent states. 
+For instance, a thread may read stale state while another thread is already updating it. When multiple threads alter the state at the same time, either one of the changes may last and the others get lost, or even a inconsistent state affected by multiple changes may persist. 
+Eventually, we need mechanisms to guard critical sections and enforce synchronized access. 
+
+<h4 id="lock">Locking Mechanisms</h4>
+<P>
+The general primitives for synchronization are locks, that control access to critical sections. There are different types of locks with different behaviors and semantics. 
+Semaphores&nbsp;[<A
+ HREF="0_bibliography.html#Dijkstra1965">Dij65</A>] are simple locks that provide a <TT>wait</TT> and <TT>signal</TT> function. Before entering 
+a critical section or using a shared resource, the <TT>wait</TT> function must be called. Once the critical section has been traversed, it is freed using <TT>signal</TT>. The semaphore prevents multiple threads from acquiring the semaphore at the same time by blocking other contenders in the wait call. Other semaphore implementations, so-called counting semaphores, allow a bounded number of threads to pass. Hence, a binary semaphore can be considered as a counting semaphore limited to a single active thread.
+Other constructs for mutual exclusion provide the concept of an ownership, which means that the critical section is temporarily possessed by a distinct thread, which is also the only instance able to unlock it later. 
+
+<P>
+A more advanced construct for mutual exclusion is the monitor&nbsp;[<A
+ HREF="0_bibliography.html#Hoare1974">Hoa74</A>,<A
+ HREF="0_bibliography.html#Lampson1979a">Lam79b</A>] 
+that modularly protects sections using condition variables. Often, these sections have the granularity of objects, or methods/functions. The internal condition variable allows a blocking thread to yield temporarily and wait for a modification of the condition triggered by other threads.
+A property of a locking mechanism is reentrancy. When a lock supports reentrancy, a thread that has already obtained a certain lock can pass the lock again. This is an important property for recursive functions, that may repeatedly access critical sections.
+Besides counting locks, there are also locks that differentiate between different access semantics. 
+Read/write locks allow shared access for reading threads, but exclusive access for threads that demand write access.       
+
+
+<h4 id="consq">The Consequences of Locking</h4>
+<p>Locks allow us to serialize access to critical sections. The usage of mutual exclusions yields an atomic behavior of threads within critical sections, because its execution appears as a single operation to other waiting threads. Identifying sections of code vulnerable to race conditions and carefully placing locks around tames
+indeterminacy and enforces serialized access.
+
+<P>
+However, the concept of locks has introduced another danger for multi-threaded code. 
+Improper locking may actually break the application, when obtained locks are not released or locks to acquire never become available. 
+It is obvious that faulty locking can occur when developers must explicitly place <TT>wait</TT> and <TT>signal</TT> functions to guard sections. 
+Higher-level abstractions like monitors often provide means to mark entire sections of code for mutual exclusion and implicitly acquire and release locks. However, they can still fall victim to locking issues.      
+The most notorious locking issue is the so-called deadlock. It occurs when two or more threads compete for locks with cyclic dependencies. In the simplest scenario, two threads both own a separate lock, but additionally need to acquire the lock of the other thread. As no thread can advance without acquiring a second lock, both threads are blocked and cannot continue.  
+
+<P>
+Other locking issues include livelocks and lock starvations. Similar to deadlocks, livelocks prevent threads to continue. However, threads are not blocked in a livelock situation. Instead, they steadily change states in response to other state changes of other threads involved, which in turn also change states. In an example scenario, two threads must acquire two resources in order to continue. When they cannot obtain both resources, they will return the first one and retry to obtain both. The livelock appears when two threads simultaneously start to claim a first resource, then restart again.
+Livelocks can be considered as special case of starvation. It generally describes the scenario when a thread is repeatedly unable to acquire a lock or resource, because other greedy threads are constantly claiming it.
+
+<P>
+While some starvation issues such as livelocks might be handled at runtime using random backoffs for retries, 
+potential locking issues are generally very difficult to detect due to nondeterminism.
+The risk of a deadlock increases when multiple locks with fine granularities are used. 
+Accordingly, the use of coarse locks is often recommended in order to avoid deadlocks. 
+Identifying large critical sections and guarding them by locks not just ensures serialized access.
+In fact, coarse locks result in an eventually sequential execution of threads. 
+This is contrary to our prior goal of increased parallelism.
+
+<P>
+For concurrency with true hardware parallelism, we need to choose very fine locking granularities, that enable
+multiple threads to continue in independent critical sections. Many small critical sections not just 
+increase the overhead of locking management, since locking is not free in terms of management resources.
+Yet again, the extensive use of locks emphasises the risk of the aforementioned dangers.
+It becomes clear that it is not easy to pick the right locking granularity.
+
+<P>
+Besides the issues of livelocks, deadlocks and starvations, there is also another difficulty with locks in practice.
+Given multiple pieces of code with critical sections protected by locks, we cannot guarantee that the composition of these pieces of code does not yield a deadlock.
+Essentially, we cannot compose thread-safe implementations without the risk of new locking issues.
+This is especially significant for larger code fragments such as framework components or modules.
+Locking issues may be tackled by resolute development policies, that strictly govern the usage, obtain order and conditions of locks. However, such policies cannot be enforced programmatically.
+Moreover, when external or closed-source components are used, it becomes impossible to ensure correct locking.     
+
+<P>
+Nevertheless, concurrent programming based on threads, shared state and locking is still prevailing 
+and available in most languages. It is important to recognize that this approach represents a low-level
+concept towards concurrency. It is closer to the bare metal than the other concepts we will see soon.
+However, all of these concepts still use threads under the hood.   
+
+<h3 id="java">Case Study: Concurrency in Java</h3>
+<P>
+The Java programming language has been providing thread-based concurrency from the beginning of its existence.
+It implements Mesa monitors&nbsp;[<A
+ HREF="0_bibliography.html#Lampson1979a">Lam79b</A>] for locking and mutual exclusion,
+and provides several synchronization primitives as part of the language core.
+The concurrency behavior is defined in the Java Language Specification&nbsp;[<A
+ HREF="0_bibliography.html#Gosling2012">Gos12</A>]
+which describes the JMM in detail. Java's consistency is based on a happens-before order and the notion of an implicit memory barrier. However, it does not provide sequential consistency for threads, as many developers erroneously assume.
+In fact, the JMM resembles symmetric multi-processing, where multiple CPUs have their own cache, but share a common maim memory. When CPUs access memory, they refresh their cache and eventually flush changes.
+In a metaphorical sense, Java threads resemble the CPUs, the main memory is the shared memory between threads and the CPU caches are thread local copies of data.
+The procedure of flushing or refreshing represents the traversal of a so-called memory barrier. 
+Besides the aforementioned ordering, JMM defines also which operations cannot be interrupted by other threads (atomicity) and when changes have to be propagated to other threads (visibility), based on the memory barrier.
+For instance, starting and ending a thread or using synchronization primitives touches the memory barrier, but also access to several variables with specific traits (see below).   
+
+<P>
+The <TT>synchronized</TT> keyword allows to guard an entire method or a distinct code block, using the callee resp. a given object as monitor object. Java monitors are reentrant and recursive calls are supported.
+Furthermore, every Java <TT>Object</TT> can be used as a monitor and hence provides means for condition signaling. The method <TT>wait()</TT> blocks the thread holding the monitor and releases the monitor in order to allow other threads to proceed and change the condition. In this case the other threads can use <TT>notify()</TT> and <TT>notifyAll()</TT> for signaling a waiting thread.  
+
+<P>
+The <TT>volatile</TT> keyword circumvents the thread-local copy of a variable and enforces a fresh copy from the shared memory on each access. It can only be used for single atomic operations. For instance, incrementing a value (multiple operations) is not atomic.
+The <TT>final</TT> keyword makes a variable immutable. The benefit of immutable values for concurrency is obviating the need for refreshing values, as they cannot be changed anymore. It is recommended always to set fields to final, unless there is a reason not to do so&nbsp;[<A
+ HREF="0_bibliography.html#Bloch2008">Blo08</A>].  
+Furthermore, Java provides a set of atomic entities (<TT>java.util.concurrent.atomic</TT>), similar to volatile variables. However, these entities are objects, ensure atomicity of all operations and use very efficient mechanisms internally such as compare and swap.
+
+<P>
+Activities are represented by the <TT>Thread</TT> class, that provides methods for thread handling such as <TT>start()</TT>.
+This class also has several coordination methods such as <TT>resume()</TT> and <TT>stop()</TT>, that are unfortunately broken and should not be used&nbsp;[<A
+ HREF="0_bibliography.html#Bloch2008">Blo08</A>].   
+The <TT>Runnable</TT> interface abstracts from the Thread class and only possesses a <TT>run()</TT> method, the method eventually executed by a thread once started.
+
+<P>
+While this is the foundation of concurrent programming in Java, several higher-level abstractions have been introduced, starting with Java 5. The main reason was to to facilitate the development of concurrent applications.
+Explicit locks (<TT>java.util.concurrent.locks</TT>) provide more extensive locking operations (e.g. read-write locks) than the implicit monitior-based locks of <TT>synchronized</TT>.
+Concurrent collections, such as <TT>ConcurrentMap</TT> or <TT>BlockingQueue</TT>, extend existing collections and provide thread-safe operations as well as operations for coordinated access.  
+Another abstraction is provided by <TT>Runnable</TT>, <TT>Callable</TT> and the <TT>Executor</TT> framework.
+Essentially, these classes decouple tasks to be executed from the actual entities that execute them.
+In combination with thread pool entities (e.g. <TT>ExecutorService</TT>), this is a very helpful abstraction for many concurrent applications.
+<TT>Future</TT>s allow to asynchronously execute a <TT>Callable</TT> in another thread, immediately returning a proxy object to the eventual result. 
+For more complex coordinations between threads, several high-level coordination primitives have been supplied.
+This includes primitives such as an explicit counting <TT>Semaphore</TT>, a <TT>CountDownLatch</TT> (a barrier triggered by a countdown) and a <TT>CyclicBarrier</TT> (a barrier point for recurring coordination of threads).
+In Java 7, the fork/join framework&nbsp;[<A
+ HREF="0_bibliography.html#Lea2000">Lea00</A>] has been introduced. This framework aims for easy parallelization of computationally heavy tasks by spawning subtasks and using divide-and-conquer strategies. It provides implicit task coordination and employs work-stealing.
+
+<P>
+The listing&nbsp below shows an exemplary web application, written in Java, and using <a href="http://jetty.codehaus.org/jetty/">jetty</a> and <a href="http://www.oracle.com/technetwork/java/javaee/servlet/index.html">Java Servlets</a>. 
+On startup, the <TT>CountingRequestHandler</TT> gets instantiated a single time. 
+Requests are internally handled in a threadpool, so concurrent requests may trigger the simultaneous invocation of the handle() method of <TT>CountingRequestHandler</TT>. 
+The shared variable <TT>count</TT> is accessed by each thread and must be hence protected, using a synchronized block. This demonstrates the usage of monitors (in this specific case, the usage of the <TT>AtomicLong</TT> class would represent a more elegant and performant solution).  
+
+<p>A minimalistic, concurrent web application written in Java that returns the number of requests handled so far:</p>
+<p><pre>import java.io.IOException;
+import javax.servlet.ServletException;
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
+import org.eclipse.jetty.server.Request;
+import org.eclipse.jetty.server.Server;
+import org.eclipse.jetty.server.handler.AbstractHandler;
+
+public class CountingRequestHandler extends AbstractHandler {
+	
+	//Variable for counting requests handled so far
+	private long count = 0;
+	
+	public void handle(String target, Request baseRequest, 
+			HttpServletRequest request, HttpServletResponse response)
+			throws IOException, ServletException {
+		
+		response.setContentType("text/plain");
+		response.setStatus(200);
+		baseRequest.setHandled(true);
+		
+		final long current; 
+		//Access and modification of a variable shared between threads.
+		synchronized (this) {
+			current = ++count;
+		}
+		
+		response.getWriter().println(""+current);
+	}
+
+	public static void main(String[] args) throws Exception {
+		Server server = new Server(8080);
+		server.setHandler(new CountingRequestHandler());
+
+		server.start();
+		server.join();
+	}
+}</pre></p>
+
+
+<h3 id="app">Multithreading and Locks for Concurrent Application Logic</h3>
+
+<P>
+Multi-threaded application servers assign a dedicated thread for each application request to handle.
+As long as there is no coordination needed between other threads, this programming model is very simple.
+The isolated view makes it easy to program the request logic as a sequence of operations.
+Also, when the request mainly executes CPU-bound operations, this approach is a valid choice.
+When the request logic contains I/O-bound operations, latency is generally hidden inside the server, as there are multiple requests to handle concurrently. However, this does not speed up request handling for a single request, it only increases general throughput of the server.
+For reducing the actual latency of a single request, we need to further parallelize operations of a single request. Additional threads help executing more work at the same time, as long as operations are independent and thus can run in parallel.
+The more operations are actually I/O-bound, the more we run into the same problem as seen in <a href="index.html#chapter/4">chapter 4</a>. Using more threads in order to parallelize I/O yields issues due to heavy context switching and
+high memory consumption.
+In our architecture, the services are separated components that are accessed via the network, which result in a strong focus on I/O-bound operations. In essence, latency can be reduced by parallelizing work, but this works generally better for CPU-bound operations. For I/O-bound operations, this approach does not scale well.
+
+<P>
+Concerning coordination between requests, we have seen that locking, supplemented with conditional variables, can be used to coordinate threads. However, the difficulties of locking and the strong nondeterminism of incoming requests in an application server makes it rather difficult to implement completely correct inter-request coordination patterns.
+Instead, it is more advisable to rely on external pub/sub message components (e.g. redis), although this still blocks threads. 
+Similarly, it is recommended to share state between requests using external facilities such as key/value stores, in order to circumvent explicit locking inside the application server. 
+Another advantage of this approach is the possibility to transparently scale out by instantiating new application servers.

@@ -1,0 +1,87 @@
+<title>8. Discussion</title>
+
+<meta charset="utf-8">
+
+<link rel="stylesheet" href="../style.css">
+
+<link rel="prev" href="074_summary.html"> 
+<link rel="next" href="090_index.html"> 
+
+<script src="../script.js"></script>
+
+<h2 id="discuss">8. Discussion</h2>
+
+<P>
+We have seen how concurrency affects programming in different stages of a scalable web architecture. 
+Also, the usage of distributed systems has been identified as an imperative for scalability, performance and availability.
+Let us now take a step back and reflect on the question, why concurrent and distributed programming 
+is in fact so demanding and so different from conventional programming.</p>  
+
+<p>Conventional programming is based on the idea of a Von Neumann architecture. 
+We have a single memory, a single processor and our program is a sequence of instructions. 
+When the program is running, we have a single path of execution.
+State can be accessed and altered without thought, as it is exclusively used by our single flow of execution.
+Consistency can never be compromised.
+This is a valid abstraction for many programs and provides very clear implications and contracts.
+When the program or the machine crashes, the entire progress is basically lost, but we never have partial failures, except for programming errors.</p>
+
+<P>
+Once we add additional flows of execution, multitasking is necessary for scheduling multiple activities on a single machine. As long as both flows do not share any state, the general abstraction remains unaffected.
+But if we allow state to be shared between activities and use preemptive scheduling, the abstraction becomes leaky. Although a path of execution is still processed sequentially, we cannot make assumptions on the order of interleavings. In consequence, different scheduling cycles yield different interleavings, which in turn affect the order of access of shared data. Consistency is at risk.
+It is especially the notion of a shared, mutable state that is ambiguously reflected in this model. When state is isolated by a single flow of execution, it can be modified without any risk. Once state is shared, its shared mutability becomes the main issue. Immutable state can be shared, as it does not represent a consistency hazard. 
+If we still want to keep to our prior abstraction, we need to synchronize access to shared, mutable state using primitives such as locks.
+The moment we replace the processor with another one with multiple cores, the extent of nondeterminism vastly increases. We can now seize true parallelism, and multiple flows of execution can actually run in parallel physically. As a side note, this also changes the single memory assumption, because multiple cores introduce multiple levels of hierarchical caches, but most programmers will not be affected by this low-level modification.
+That's because this circumstance is entirely covered by operating systems, compilers and runtime environments. 
+Due to true parallelism, synchronization and coordination between flows of execution becomes imperative in case 
+they share state or affect each other.</p>
+
+<P>
+The conceptual idea of sequential execution can still be kept up, although it has only little in common with the actual execution environment of the hardware anymore. Especially when concurrent programming is used, the interleavings, overlappings and synchronizations of different flows of execution are not apparent. The inherent nondeterminism is not reflected in this model. 
+When locking is used in a too coarse granularity, we end up in an execution model that is similar to the single core/processor system. Enforcing strict serializability eventually causes a sequential execution of all concurrent activities.
+When a sequential program runs on a single core machine, it is reasonable to have the notion of a program controlling its surrounding world entirely. When the application pauses, the environment does not change.
+True parallelism breaks this perception. The program has not anymore the sole control over the execution environment. Independently of any operations of a thread, other threads may change the environment.</p>   
+
+<P>
+As long as concise locking mechanisms or higher-level abstractions are used to protect from race conditions,
+shared state is still manageable and basically available for multiple activities running in parallel.
+Concurrency abstractions such as TM take away a lot of the actual complexity in place.
+By adding even more CPU cores, and more hardware resources, we can scale our application to provide additional throughput, parallelism, and gradually decrease latency.</p>  
+
+<p>However, at a certain point, this approach does not make sense anymore. On the one hand, hardware resources are limited--at least, physically. According to Amdahl's law, the maximum expected improvement by adding additional cores is also limited. 
+On the other hand, at a certain scale, there are several non-functional requirements that become relevant: scalability, availability and reliability. We want to further scale our application, although we cannot scale a single node anymore. A crash still stops our entire application. But we might want the application to be resilient and to continue its service, even when the machine fails. The usage of multiple machines, spawning a distributed system, becomes inevitable.</p>  
+
+<P>
+The introduction of a distributed system changes the picture entirely. We now have multiple nodes that execute code at the same time, a further enhanced form of true parallelism.
+The most aggravating change is the notion of a state. In a distributed system, we don't have anything like a global state at first glance. Each node has its own state, and can communicate with remote nodes in order to ask for other states. However, whenever a state has been received, it reflects a past state of the other node, because that node might have already changed its state in the meantime. 
+Also, communication with remote nodes has side effects that do not exist when accessing local state. 
+This is not limited to unbounded latencies of message responses, it also includes the results of arbitrary message ordering.
+Furthermore, individual nodes may fail in a distributed system, or the network can become partitioned. This yields completely different failure models, as compared to local computing on a single machine.</p>  
+
+<P>
+It is obvious that our initial model--based on sequential computing--is completely broken now. 
+The degree of complexity is many times higher than before. We have elemental concurrency and parallelism, unbounded, unordered communication and neither global state nor time. 
+As opposed to local calls, operations dispatched to remote nodes are asynchronous by nature.
+We are in need of new abstractions for tackling these inherent properties of a distributed system in order to build useful applications on top. There are generally two diametrically opposed approaches towards this challenge.</p>  
+
+<p>One approach aims for reconstructing as many previous assumptions and contracts as possible.
+Based on complex synchronization protocols, the notion of a global state is re-established and consistency becomes guaranteed again.
+By using coordination mechanisms, we can also fight against nondeterminsm down to enforcing the isolated, sequential execution of code fragmented to multiple nodes in an extreme case.   
+RPC restore the concept of function calls and allow to call remote functions implicitly and in the same way as local functions.
+
+<P>
+The other major approach accepts the essential flaws of distributed systems and incorporates them right into the programming model. This concerns primarily the acknowledgment of asynchrony and, as a result, the rejection of consistent global state. Eventually, asynchrony then exposes the inherent complexity of distributed systems to the programmer. This approach also favors explicit semantics rather than transparencies.
+Nodes have only local state and potentially stale states from other nodes, hence the notion of a global state is replaced by an individual and probabilistic view on state.</p>   
+
+<P>
+In a nutshell, the former approach hides complexity using very sophisticated and but often also laborious abstractions.
+However, by eluding asynchrony, this approach abandons some original gains of distribution in the first place.
+Enforcing synchrony requires a large coordination overhead, which in turn wastes lots of resources and capabilities of the distributed system. 
+Also, when the provided abstractions are not appropriate, they make the development of distributed applications even more difficult. For example, when RPC abstractions pretend that remote entities are in fact local entities, the programmer cannot be aware of the consequences of inevitable network faults at runtime.</p>  
+
+<P>
+The latter approach exposes the complexities and forces the programmer to deal with them explicitly. 
+Evidently, this approach is more challenging. On the other hand, by embracing asynchrony, failures and nondeterminism, high performance systems can be implemented that provide the required robustness, but also the true expressiveness of distributed applications.</p>  
+
+<P>
+As a matter of course, no approach is generally superior. Many of the concepts we have studied in the previous chapters tend to belong to either one of the camps. In fact, many existing distributed systems incorporate ideas from both approaches by applying high level abstractions when appropriate, but not renouncing complexity, when it is misleading.</p>    
+

@@ -1,0 +1,48 @@
+<title>5.7 Summary</title>
+
+<meta charset="utf-8">
+
+<link rel="stylesheet" href="../style.css">
+
+<link rel="prev" href="056_other.html"> 
+<link rel="next" href="060_index.html"> 
+
+<script src="../script.js"></script>
+
+<h2 id="summary">5.7 Summary</h2>
+
+<P>
+Conventional web applications are primarily  "embarrassingly parallel", because requests are entirely isolated and easy to execute independently.
+Highly interactive and collaborative web applications, as well as real-time web applications, require more challenging concurrency properties.
+On the one hand, these applications need to coordinate actions and communicate between different concurrent requests. They also share a common state between requests as part of the application logic.  
+This enables features such as instant notifications, asynchronous messaging and server-sent events--important building blocks for a wide range of modern web applications including social web applications, multiplayer browser games, collaborative web platforms and web services for mobile applications.        
+On the other hand, modern applications require increasingly low latencies and very high responsiveness. This can be tackled by parallelizing the application logic operations which are necessary for a request as much as possible. In turn, this requires synchronization of the request logic for each request.  
+Hence, the application logic of modern, large-scale web applications is inherently concurrent. 
+We have therefore presented and analyzed the most popular concurrency concepts for programming concurrent systems in general.
+
+<P>
+The concept of threads and locks is based on mutable state shared by multiple flows of execution.
+Locks are required to enforce mutual exclusion and prevent race conditions. In turn, locks introduce the hazard of deadlocks, livelocks and starvation. Choosing the right locking granularity becomes a trade-off between the danger of race conditions and deadlocks, and between degenerated sequential execution and unmanageable nondeterminism. The combination of nondeterminism and mutable shared state makes it extremely hard to reason about lock-based concurrency and its correctness. 
+Furthermore, compositions of lock-based components are not guaranteed to be deadlock-free.
+Concurrent programming based on threads, locks and shared state is still essential. 
+It represents the low-level foundation for all higher concurrency abstractions and cannot be ignored. 
+However, it is often the wrong level of abstraction for high-level application programming because it is too difficult and too error-prone.
+
+<P>
+STM addresses these problems of lock-based concurrency by introducing transactional operations for concurrent code. Transactions isolate operations on mutable shared state and are lock-free and composable.
+However, transactional code must not contain any side effects (e.g. no I/O operations), as it might be aborted and retried. 
+STM hides the complexity of transaction handling in a software layer, which introduces some computational overhead at runtime.
+
+<P>
+The actor model represents an entirely different approach that isolates mutability of state. 
+Actors are separate, single-threaded entities that communicate via immutable, asynchronous and guaranteed messaging. Thus, actors encapsulate state and provide a programming model that embraces message-based, distributed computing.
+
+<P>
+Common event-driven architectures evict the danger of deadlocks by using a single-threaded event loop.
+The event loop dequeues piled-up events and sequentially executes each event  with its associated event handler (i.e. callbacks). Hence, application logic is defined as a set of event handlers, which results in an inversion of control when compared to purely sequential code. When applications are primarily I/O-bound and event handlers do not execute computationally complex operations, this concept utilizes a single CPU core very well and makes concurrency reasoning very easy.
+
+<P>
+We have also seen that dataflow programming uses declarative concurrency based on implicit dependency graphs. 
+Synchronous message passing provides channel-based points for data exchange, which can also be used for synchronizing and coordinating different flows of execution. 
+Coroutines represent primitives for cooperative task handling. Futures and promises are helpful for decoupling background tasks and later synchronizing with their eventual result.
+

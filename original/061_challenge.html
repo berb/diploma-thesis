@@ -1,0 +1,307 @@
+<title>6.1 The Challenge of Distributed Database Systems</title>
+
+<meta charset="utf-8">
+
+<link rel="stylesheet" href="../style.css">
+
+<link rel="prev" href="060_index.html"> 
+<link rel="next" href="062_internals.html"> 
+
+
+<script src="../script.js"></script>
+
+<h2 id="61">6.1 The Challenge of Distributed Database Systems</h2>
+
+<p>As we think about large-scale web applications, we need storage backends that scale and support
+concurrency. By scalability, we aim for increasable data capacity and growing read/write throughput of a high degree.
+The application servers in our model handle huge numbers of requests in parallel. As they, in turn,
+rely on the backend storage systems, we need to cope with highly concurrent access at this level as well.
+
+<P>
+Throughput and capacity increases can only be sustainably achieved by employing a horizontal scale mechanism.
+A single database server would only be able to scale up to a certain load, even with specialized
+hardware equipment. As a consequence, we need a concurrent and distributed system for scalable backend storage.
+
+<P>
+The backend storage must persistently hold the application state, thus we are also expecting some kind of data consistency when reading/writing data in our application. 
+We are dealing with a distributed system, so we must expect failures in advance. In case of a failure
+of a single node, we still want the overall storage system to operate seamlessly and maintain its availability. 
+Likewise, we are executing storage operations as part of web requests, thus we demand low latency of operations.
+
+<P>
+These general requirements lead us to an important barrier of distributed systems, 
+Brewer's theorem on the correlation of consistency, availability and partition tolerance. 
+
+<h3 id="cap">The CAP Theorem</h3>
+
+<p>The CAP conjecture was introduced by Brewer in 2000&nbsp;[<A
+ HREF="0_bibliography.html#Brewer2000">Bre00</A>] and later confirmed by 
+Gilbert and Lynch&nbsp;[<A
+ HREF="0_bibliography.html#Gilbert2002">Gil02</A>] as a theorem. Brewer argues that distributing computations is relatively easy, 
+but the hard part of distributed systems is actually persisting state. Moreover, he postulates three
+distinct properties for distributed systems with an inherent correlation.
+
+<P>
+<DL>
+<DT><STRONG>Consistency</STRONG></DT>
+<DD>The consistency property describes a consistent view of data on all nodes of the distributed system. That is, the system assures that operations have an atomic characteristic and changes are disseminated simultaneously to all nodes, yielding the same results. 
+  </DD>
+<DT><STRONG>Availability</STRONG></DT>
+<DD>This property demands the system to eventually answer every request, even in case of failures. This must be true for both read and write operations.
+  In practice, this property is often narrowed down to bounded responses in reasonable time. 
+  However, Gilbert and Lynch have confirmed the theorem even for unbounded, eventual responses.    
+  
+</DD>
+<DT><STRONG>Partition tolerance</STRONG></DT>
+<DD>This property describes the fact that the system is resilient to message losses between nodes. A partition is an arbitrary split between nodes of a system, resulting in complete message loss in between.
+  This affects the prior properties. Mechanisms for maintaining consistency must cope with messages losses.
+  And according to the availability property, every node of any potential partition must be able to respond to a request.   
+</DD>
+</DL>
+
+<p>The core statement of Brewer's theorem now goes as follows: 
+
+<BLOCKQUOTE>
+"You can have at most two of these properties for any shared-data system."
+</BLOCKQUOTE>
+
+<P>
+We have seen that all properties are desirable. But any real system must trade off the properties and dismiss at least one of them, as shown in <a href="#figure/1">figure 6.1</a>. 
+So we have three distinct combinations with significantly different characteristics.
+
+<div class="figure" id="figure/1">
+
+<img src="resources/cap.svg" style="width:100%">
+
+<p class="caption">Figure 6.1: Different properties that a distributed system can guarantee at the same time, according to Brewer's theorem&nbsp;[<A
+ HREF="0_bibliography.html#Brewer2000">Bre00</A>].</p>
+
+</div>
+
+<h4 id="ca">Consistency & Availability (CA)</h4>
+<p>The group of distributed systems following this model provides a consistent and available service, 
+but does not tolerate partitions. In case of a partition, these systems may become inconsistent, as we will see soon. The combination is also known as <SPAN  CLASS="textit">high-availability consistency</SPAN>.
+
+<P>
+Contenders following this approach include most of the traditional relational database management systems.
+Replication is an important mechanism for achieving highly available consistency and 
+transaction protocols such as the two-phase commit protocol are applied to ensure consistency. 
+The separation into partitions may lead to so-called "split brain" scenarios, in which different
+partitions create conflicting replicas as a result of isolation. 
+
+<P>
+Recovering from such scenarios would require some kind of consensus protocol. This in turn would disallow
+nodes to service requests unless a consensus is available. We would thus convert our CA approach into a
+CP approach at the sacrifice of availability. The shortcomings of coping with network errors renders 
+the CA approach less suitable for larger distributed database systems.    
+
+<h4 id="cp">Consistency & Partition Tolerance (CP)</h4>
+<p>
+Distributed systems at the intersection of consistency and partition tolerance provide a 
+strongly consistent service. Consistency is guaranteed even in the presence of a partition.
+However, nodes of a partition may not be able to respond to requests as long as they have not yet
+agreed with other nodes that may be temporarily unreachable. As a result, availability cannot be always provided.    
+This combination of properties is also known as <SPAN  CLASS="textit">enforced consistency</SPAN>.
+
+<P>
+In practice, this approach is important when consistency must be enforced at any costs, and the system
+is still inherently distributed by design. That is for instance a banking application, where the balance of all accounts
+is a primary constraint. Database systems implementing this model are also often based on 
+relational database systems.  
+Supporting consistent states even in case of network errors requires the usage of sophisticated algorithms
+for quorum and majority decisions. Such a protocol for solving consensus is the Paxos protocol&nbsp;[<A
+ HREF="0_bibliography.html#Lamport1998">Lam98</A>]. 
+ 
+<h4 id="ap">Availability & Partition Tolerance (AP)</h4>
+<p>Distributed systems that are always available and tolerate partitions maintain their service 
+even when partitions occur. However, a reachable node may then hold (temporarily) inconsistent state.
+Thus, this intersection of properties is also known as <SPAN  CLASS="textit">eventual consistency</SPAN>.
+
+<P>
+In terms of data and state, the sacrifice of strong consistency guarantees appears to be questionable 
+at first glance. However, many applications can indeed tolerate deferred consistency properties when
+favoring availability at all costs. In this case, it is important to keep in mind potential issues due to eventually consistent data on application level during development.
+Well known examples following this approach are the DNS or web caches. 
+Stale data (e.g. host mappings resp. cached responses) are acceptable for a while, but eventually the latest
+version of the data disseminates and purges older entries.
+
+<h4 id="alt">Criticism and an Alternative Model to the CAP Theorem</h4>
+<p>With the beginning of the NoSQL movement and increasing interest in eventually consistent data stores, some criticism has been leveled at the CAP theorem.  A central issue of the CAP theorem results from 
+the simplifying error model that only targets network failures. 
+It is especially the premature dropping of consistency as the answer to network errors, that is raised to 
+question by members of the database community such as Stonebraker[<A
+ HREF="0_bibliography.html#Stonebraker2010">Sto10</A>].
+
+<P>
+Abadi targets other shortcomings of the CAP theorem, namely the asymmetry of availability and consistency
+and the generalising trade-off between consistency and availability&nbsp;[<A
+ HREF="0_bibliography.html#Abadi2010">Aba10</A>]. 
+According to Abadi, this becomes 
+obvious when regarding systems in the absence of partitions. As a result, Abadi proposes
+an alternative model: PACELC. It can be used to describe whether a system, in case of a partition (P),
+either focuses availability (A) or consistency (C), and whether a system else (E) focuses on
+latency (L) or consistency (C). As a consequence, systems can now be categorized more precisely. 
+As an example, eventually consistent systems (AP in terms of CAP) can be split up into PA/EL or PA/CL systems, yielding more details on their regular operational mode in the absence of partitions.
+
+
+<h3 id="consistency">Consistency Models</h3>
+<p>We have seen that consistency, availability and partition tolerance cannot be guaranteed at the same time for
+a distributed system. From our perspective of large-scale web architectures, this is mainly important for the 
+storage backends, as these components keep our application states persistently. 
+When building a large web architecture, we have to choose storage components while keeping in mind 
+the prior limitations.
+Consistency is the most defining constraint for our application logic, as it determines 
+the type of consistency to expect from the database system. 
+Thus, we need to consider different consistency models and their impacts on the application.
+We limit our review to the two important main consistency models, from the perspective of our application, which is the client of the database.  
+
+<P>
+While the following two models are generally opponents of each other, it is noteworthy that Brewer mentions they in fact form a spectrum. As a result, there are some means for trade-offs in between. 
+Several distributed database systems 
+allow to fine-tune consistency trade-offs via configuration parameters.
+Also, a large-scale web application can often split data storage requirements into functional groups.
+For instance, an e-commerce site can tolerate relaxed consistency guarantees for product ratings and comments,
+while stronger consistency is required for goods in stock and orders. 
+
+<h4 id="acid">ACID</h4>
+<p>RDBMS are the predominant database systems currently in use for most applications, including
+web applications. Their data model
+and their internals are strongly connected to transactional behaviour when operating on data. 
+However, transactional behaviour is not solely related to RDBMS, but is also used for other systems.
+A set of properties describes the guarantees that database transactions generally provide in order to maintain
+the validity of data&nbsp;[<A
+ HREF="0_bibliography.html#Haerder1983">Hae83</A>].
+
+<P>
+<DL>
+<DT><STRONG><SPAN  CLASS="textbf">A</SPAN>tomicity</STRONG></DT>
+<DD>This property determines that a transaction executes with a "all or nothing" manner. A transaction can either be a single operation, or a sequence of operations resp. sub-transactions. 
+  As a result, a transaction either succeeds and the database state is changed, or the database remains unchanged, and all operations are dismissed.
+  
+</DD>
+<DT><STRONG><SPAN  CLASS="textbf">C</SPAN>onsistency</STRONG></DT>
+<DD>In context of transactions, we define consistency as the transition from one valid state to another, never leaving behind an invalid state when executing transactions.  
+  
+</DD>
+<DT><STRONG><SPAN  CLASS="textbf">I</SPAN>solation</STRONG></DT>
+<DD>The concept of isolation guarantees that no transaction sees premature operations of other running transactions. In essence, this prevents conflicts between concurrent transactions. 
+  
+</DD>
+<DT><STRONG><SPAN  CLASS="textbf">D</SPAN>urability</STRONG></DT>
+<DD>The durability property assures persistence of executed transactions. Once a transaction has committed, the outcome of the transaction such as state changes are kept, even in case
+  of a crash or other failures.    
+</DD>
+</DL>
+
+<P>
+Strongly adhering to the principles of ACID results in an execution order that has the same effect as a purely serial execution. In other words, there is always a serially equivalent order of transactions that represents the exact same state&nbsp;[<A
+ HREF="0_bibliography.html#Dollimore2005">Dol05</A>]. 
+It is obvious that ensuring a serializable order negatively affects performance and concurrency, even when a single machine is used. In fact, some of the properties are often relaxed to a certain extent in order to improve performance.
+A weaker isolation level between transactions is the most used mechanism to speed up transactions and their
+throughput. Stepwise, a transactional system can leave <SPAN  CLASS="textit">serializablity</SPAN> and fall back to the weaker
+isolation levels <SPAN  CLASS="textit">repeatable reads</SPAN>, <SPAN  CLASS="textit">read committed</SPAN> and <SPAN  CLASS="textit">read uncommitted</SPAN>.
+These levels gradually remove range locks, read locks and resp. write locks (in that order).
+As a result, concurrent transactions are less isolated and can see partial results of other transactions, 
+yielding so called read phenomena. 
+Some implementations also weaken the durability property by not guaranteeing to write directly to disk. 
+Instead, committed states are buffered in memory and eventually flushed to disk. This heavily decreases
+latencies at the cost of data integrity.
+
+<P>
+Consistency is still a core property of the ACID model, that cannot be relaxed easily. 
+The mutual dependencies of the properties make
+it impossible to remove a single property without affecting the others.  
+Referring back to the CAP theorem, we have seen the trade-off between consistency and availability regarding
+distributed database systems that must tolerate partitions. In case we choose a database system that
+follows the ACID paradigm, we cannot guarantee high availability anymore. 
+The usage of ACID as part of a distributed systems yields the need of distributed transactions or similar 
+mechanisms for preserving the transactional properties when state is shared and sharded onto multiple nodes.   
+
+<p>
+Now let us reconsider what would happen if we evict the burden of distributed transactions. 
+As we are talking about distributed systems, we have no global shared state by default. The only
+knowledge we have is a per-node knowledge of its own past. Having no global time, no global now,
+we cannot inherently have atomic operations on system level, 
+as operations occur at different times on different machines.
+This softens isolation and we must leave the notion of global state for now. Having no 
+immediate, global state of the system in turn endangers durability.
+
+<P>
+In conclusion, building distributed systems adhering to the ACID paradigm is a demanding challenge.
+It requires complex coordination and synchronization efforts between all involved nodes, and 
+generates considerable communication overhead within the entire system. 
+It is not for nothing that distributed transactions are feared by many architects&nbsp;[<A
+ HREF="0_bibliography.html#Helland2009">Hel09</A>,<A
+ HREF="0_bibliography.html#Alvaro2011">Alv11</A>]. Although it is
+possible to build such systems, some of the original motivations for using a distributed database system
+have been mitigated on this path. Isolation and serializablity contradict scalability and concurrency.
+Therefore, we will now consider an alternative model for consistency that sacrifices consistency for 
+other properties that are interesting for certain systems.
+
+<h4 id="base">BASE</h4>
+<p>This alternative consistency model is basically the subsumption of properties resulting from a system
+that provides availability and partition tolerance, but no strong consistency&nbsp;[<A
+ HREF="0_bibliography.html#Pritchett2008">Pri08</A>].
+While a strong consistency model as provided by ACID implies that all subsequent reads after a write yield
+the new, updated state for all clients and on all nodes of the system, this is weakened for BASE. 
+Instead, the weak consistency of BASE comes up with an inconsistency window, a period in which the propagation
+oft the update is not yet guaranteed.  
+
+<P>
+<DL>
+<DT><STRONG><SPAN  CLASS="textbf">B</SPAN>asically <SPAN  CLASS="textbf">a</SPAN>vailable</STRONG></DT>
+<DD>The availability of the system even in case of failures represents a strong feature of the BASE model.
+  
+</DD>
+<DT><STRONG><SPAN  CLASS="textbf">S</SPAN>oft state</STRONG></DT>
+<DD>No strong consistency is provided and clients must accept stale state under certain circumstances.
+  
+</DD>
+<DT><STRONG><SPAN  CLASS="textbf">E</SPAN>ventually consistent</STRONG></DT>
+<DD>Consistency is provided in a "best effort" manner, yielding a consistent state as soon as possible.  
+</DD>
+</DL>
+
+<P>
+The optimistic behaviour of BASE represents a best effort approach towards consistency, but is also said to be
+simpler and faster. Availability and scaling capacities are primary objectives at the expense of consistency. 
+This has an impact on the application logic, as the developer must be aware of the possibility of stale data.
+On the other hand, favoring availability over consistency has also benefits for the application logic in
+some scenarios. For instance, a partial system failure of an ACID system might reject write operations, 
+forcing the application to handle the data to be written somehow. A BASE system in turn might always accept
+writes, even in case of network failures, but they might not be visible for other nodes immediately.
+The applicability of relaxed consistency models depends very much on the application requirements.
+Strict constraints of balanced accounts for a banking application do not fit eventual consistency naturally.
+But many web applications built around social objects and user interactions can actually accept slightly stale data.        
+When the inconsistency window is on average smaller than the time between request/response cycles of 
+user interactions, a user might not even realize any kind of inconsistency at all. 
+
+<P>
+For application development, there are several more specific variants of eventual consistency that
+give the developers certain types of promises and allow to reason more easily about relaxed consistency
+inside the application logic&nbsp;[<A
+ HREF="0_bibliography.html#Vogels2008">Vog08</A>].
+When <SPAN  CLASS="textit">causal consistency</SPAN> is provided, operations that might have a causal relation are seen in the
+same sequence by all nodes. 
+<SPAN  CLASS="textit">Read-your-writes consistency</SPAN> ensures that a client will always see the new value after having updated
+it, and never again an older value. 
+<SPAN  CLASS="textit">Session consistency</SPAN> is a variant of the read-your-writes consistency, that limits the behavior to
+a certain client session. It hence requires session affinity inside the system, 
+but can be helpful for developers.
+The guarantee of <SPAN  CLASS="textit">monotonic read consistency</SPAN> is that after a read operation, any subsequent read must
+not yield older values.  
+Similarly, <SPAN  CLASS="textit">monotonic write consistency</SPAN> guarantees to serialize write operations of a single client.
+Not providing this guarantee represents a severe issue for application developers, making it very difficult
+to reason about states.
+
+<P>
+Some of these consistencies can be combined or are subset of others. Providing both monotonic read and 
+read-your-writes consistency provides a reasonable foundation for developing applications based on 
+eventual consistency.
+
+<P>
+As eventual consistency entails the possibility of data conflicts, appropriate resolution mechanisms must be
+employed. Often, conflict resolution is also part of the application logic, and not only provided by
+the database system. In general, conflicts are resolved either on read or write operations, or 
+asynchronously in the background, decoupled from client operations. 
+

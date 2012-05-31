@@ -1,0 +1,445 @@
+<title>9.2 Trends in Programming Languages</title>
+
+<meta charset="utf-8">
+
+<link rel="stylesheet" href="../style.css">
+
+<link rel="prev" href="091_archtrends.html"> 
+<link rel="next" href="093_summary.html"> 
+
+<script src="../script.js"></script>
+
+<h2 id="progtrends">9.2 Trends in Programming Languages</h2>
+
+<p>Programming languages have always been heavily influenced by programming paradigms, which in turn have been
+characterized by general computing trends.
+The cumbersomeness of low-level machine code yielded imperative programming languages. These languages 
+take advantage of compilers or interpreters in order to generate low-level machine code based on easier to handle higher-level languages. 
+As a result of increasing complexity and scale of programs, there was a need for finer granularity and 
+encapsulation of code, which led to new  modularization concepts.
+This has been later complemented and extended by the object-oriented paradigm, which introduced new concepts 
+like polymorphism and inheritance. The object-oriented paradigm promotes the design and implementation of
+large, but manageable, software systems and thus addresses the requirements of large-scale applications.  
+However, the prevalence of multi-core architectures and the pervasion of distributed systems and applications in everyday life represent other trends affecting upcoming programming languages.  
+Some even believe that "the concurrency revolution is likely to be more disruptive than the OO revolution"&nbsp;[<A
+ HREF="0_bibliography.html#Sutter2005">Sut05</A>].
+Although this is a controversial statement, it is remarkable that most of the new programming languages take
+concurrency seriously into account and provide advanced concurrency concepts aside from basic threading support&nbsp;[<A
+ HREF="0_bibliography.html#Ghosh2011">Gho11</A>]. 
+
+<P>
+Apart from the object-oriented paradigm, there are several less common paradigms such as declarative or functional programming that focus on high expressiveness. 
+Programming languages following these paradigms have been considered as esoteric and academic languages by the industry for a long time. Interestingly, there is an increasing popularity of these alternative concepts, especially in functional programming and even for web application programming&nbsp;[<A
+ HREF="0_bibliography.html#Vinoski2009">Vin09</A>]; 
+not least because these languages provide inherently different concurrency implications. 
+As functional languages favor immutability and side-effect free programming, they are by design easier to
+execute concurrently. They also adapt other techniques for handling mutable state and explicit concurrency.
+
+<P>
+The gap between imperative, object-oriented languages and purely functional languages has been bridged by another tendency: multi-paradigm programming languages. By incorporating multiple paradigms, programming languages allow the developer to pick the right concepts and techniques for their problems, without committing themselves to
+a single paradigm. Multi-paradigm languages often provide support for objects, inheritance and imperative code,
+but incorporate higher-order functions, closures and restricted mutability at the same time.  
+Although these languages are not pure in terms of original paradigms, they propose a pragmatic toolkit for different problems with high expressiveness and manageable complexity at the same time.
+
+<P>
+The higher expressiveness is often a basic prerequisite for the design of so-called domain-specific languages&nbsp;[<A
+ HREF="0_bibliography.html#Ghosh2010">Gho10</A>], another trending topic in software development.
+Domain-specific languages allow to specify and express domain objects and idioms as part of a higher-level language for programming. By providing a higher level of abstraction, domain-specific languages allow to focus 
+on the application or business domain while concealing details of the programming language or platform.
+Several frameworks for web development can be considered as domain-specific languages for the domain of web applications.</p>
+
+
+<h3 id="weblang">New Programming Languages for Web Programming</h3>
+
+<p>Thanks to the web, JavaScript has not just become the <SPAN  CLASS="textit">lingua franca</SPAN> of the web, but also the most widespread programming language in general. 
+Every browser, even mobile ones, act as an execution environment for JavaScript applications, 
+thus JavaScript is available on virtually all computing devices.
+But JavaScript is also increasingly popular outside the web browser, thanks to projects like node.js.
+Microsoft uses JavaScript as the main programming language for Metro applications in the upcoming Windows 8 release.
+JavaScript is a multi-paradigm language that incorporates prototypal object inheritance combined with many
+functional aspects of Scheme. It has been designed as a general-purpose programming language, but reached
+attention, and sometimes also faced <a href="http://www.crockford.com/javascript/javascript.html">hatred</a>, not until it became popular through the web.
+However, JavaScript is notoriously known for some of its "bad parts"&nbsp;[<A
+ HREF="0_bibliography.html#Crockford2008">Cro08</A>]. 
+Deficiencies include odd scoping, global variables, automatic syntax correction (i.e. semicolon insertion)
+with misleading results, and problems with the type system and with value comparisons. 
+
+<P>
+As we are somehow locked-in to JavaScript concerning browsers, there are several approaches to circumvent these
+drawbacks, as long as they are not fixed in the language itself by upcoming specifications.
+Crockford suggests a subset of the languages that makes only use of the "good parts" of the language&nbsp;[<A
+ HREF="0_bibliography.html#Crockford2008">Cro08</A>]. 
+Others attempt to transcompile (i.e. executing source-to-source compilation) different languages to JavaScript.
+Popular examples therefore are <a href="https://github.com/clojure/clojurescript">ClojureScript</a>&nbsp;[<A
+ HREF="0_bibliography.html#McGranaghan2011">McG11</A>] and <a href="http://coffeescript.org/">CoffeeScript</a>. 
+ClojureScript translates Clojure code into JavaScript, though some of the Clojure features are missing.
+For instance, JavaScript is single-threaded, so the usage of concurrency concepts of Clojure is limited.
+CoffeeScript takes a different route. It is a language that exclusively transcompiles to JavaScript and has been
+designed as a syntactic replacement for JavaScript. 
+CoffeeScript not just adds syntactic sugar, but also provides some advanced features like array comprehension and pattern matching.
+
+<P>
+When Google was dissatisfied with the progress on new JavaScript specifications and was reasoning about 
+the future of web programming, they identified the need for a general-purpose web programming language for both clients and servers, independent of JavaScript. 
+This need was shortly after addressed by Google's new Dart&nbsp;[<A
+ HREF="0_bibliography.html#Team2012">Tea12</A>] programming language. 
+Dart is derived from JavaScript, but incorporates several concepts from Java and other languages.
+It is class-based, like Java, and supports interfaces, abstract classes and generics. Dart is 
+dynamically typed, but annotations can be used to enforce static typing. 
+A core library provides common data structures and operations, and a DOM library supports HTML5 DOM. 
+For server applications, Dart includes an I/O library with an asynchronous, non-blocking programming model and an event loop. Dart also ships with an HTTP library as a foundation for web servers.
+Concerning concurrency in Dart, the specification disallows shared-state concurrency. 
+However, Dart proposes actor-like structures, so-called isolates. Each isolate represents an independent flow of control and it can thus be assumed to be single-threaded for the developers. 
+Multiple isolates can communicate via message passing.  
+There are different ways to execute Dart applications. Google's Chrome browser already supports Dart. Time will tell if other browser vendors will eventually support Dart as well. As an interim solution, there is a Dart-to-JavaScript transcompiler that generates pure JavaScript code out of Dart sources.
+For usage outside of the browser, Google provides a separate Dart virtual machine.     
+
+<p>Dart and node.js demonstrate the possibility of natively using the same programming language for client-side and server-side web application development. 
+Some node.js web framworks already support the usage of the same functions both for browsers and the server.
+For example, the same template rendering functions can be used, both for complete page generation on the server and for partial updates in the browser. Also RPC-like frameworks have emerged that allow the 
+client-side application to execute remote operations on the server, entirely using JavaScript.
+
+<P>
+Other frameworks like the <a href="https://developers.google.com/web-toolkit">Google Web Toolkit</a> or 
+<a href="https://vaadin.com/">Vaadin</a> address the desire for a single programming language by implementing web applications in Java, then generating client-side code automatically. 
+
+<P>
+<a href="http://opalang.org/">Opa</a> is a dedicated approach which takes this idea one step further. 
+Opa combines a new OCaml-inspired programming language, a web application framework and a runtime platform consisting of a web server, a database and a distributed execution engine.
+All parts of a web application can thus be implemented entirely in Opa, using a single language and a single programming model.
+For deployment, the code is automatically sliced into different compiled components: JavaScript code for the browser, native code for the platform and generated database queries/scripts.
+The Opa language focuses on a strong and static type system in order to provide security and to prevent traditional web security flaws such as SQL injections or cross-site scripting. 
+The platform claims to provide a scalable architecture based on an event-driven, non-blocking concept 
+and messaging mechanisms similar to Erlang. Opa also supports distribution by using multiple machines.
+
+<P>
+A downside of concepts such as Opa is, for instance, the increasing overhead of development cycles due to steady compilation. 
+Also, the thorough unification of different conceptual layers hinders flexibility and makes it more difficult to integrate custom components or legacy applications.
+
+
+<h3 id="jvm">The Rise of Polyglot JVM-based Languages and Virtual Machines</h3>
+<p>In the Java programming language, Java source files are compiled to intermediary class files, using a byte code format.
+Class files can then be executed by a JVM. This indirection was primarily chosen for platform independence, as the same compiled class file can be executed on multiple architectures using the proper JVM ("write once, run anywhere"). 
+Platform and architecture specificities are thus only part of the JVM implementations.    
+
+<P>
+The separation of source code language and byte code format executed by JVMs has led to another trend: alternative languages that compile to the JVM byte code. With the introduction of <TT>invokedynamic</TT>&nbsp;[<A
+ HREF="0_bibliography.html#Rose2011">Ros11</A>] in Java 7, the support for dynamically typed languages has been greatly increased&nbsp;[<A
+ HREF="0_bibliography.html#Thalinger2010">Tha10</A>]. 
+Most of the popular scripting
+languages and many other programming languages are now available for the JVM, as shown in <a href="#table/2">table 9.2</a>. 
+For web application development, this allows the usage of frameworks very similar to Ruby on Rails, but hosted on the JVM.
+<a href="http://erjang.org/">Erjang</a> converts binary Erlang beam files to Java class files and executes
+them in the JVM.</p>
+
+<div class="figure" id="table/2">
+
+<table>
+<thead>
+
+<TR><TH ALIGN="LEFT"><SPAN  CLASS="textbf">JVM Language</SPAN></TH>
+<TH ALIGN="RIGHT"><SPAN  CLASS="textbf">Inspired By</SPAN></TH>
+</TR>
+</thead>
+<tbody>
+<TR><TD ALIGN="LEFT"><SMALL CLASS="SMALL">
+
+Rhino </SMALL></TD>
+<TD ALIGN="LEFT"><SMALL CLASS="SMALL"> JavaScript  </SMALL></TD>
+</TR>
+<TR><TD ALIGN="LEFT"><SMALL CLASS="SMALL">
+Jython </SMALL></TD>
+<TD ALIGN="LEFT"><SMALL CLASS="SMALL"> Python  </SMALL></TD>
+</TR>
+<TR><TD ALIGN="LEFT"><SMALL CLASS="SMALL">
+JRuby </SMALL></TD>
+<TD ALIGN="LEFT"><SMALL CLASS="SMALL"> Ruby  </SMALL></TD>
+</TR>
+<TR><TD ALIGN="LEFT"><SMALL CLASS="SMALL">
+Jacl </SMALL></TD>
+<TD ALIGN="LEFT"><SMALL CLASS="SMALL"> Tcl  </SMALL></TD>
+</TR>
+<TR><TD ALIGN="LEFT"><SMALL CLASS="SMALL">
+Erjang </SMALL></TD>
+<TD ALIGN="LEFT"><SMALL CLASS="SMALL"> Erlang  </SMALL></TD>
+</TR>
+</tbody>
+
+</table>
+
+<p class="caption">Table 9.2: Examples for programming languages that have been ported to the JVM.</p>
+
+</div>
+
+<P>
+There is increasing criticism addressing drawbacks of the Java programming language. New features and
+enhancements are said to become integrated too slowly. For instance, the support for closures (Project Lambda&nbsp;[<A
+ HREF="0_bibliography.html#Goetz2010">Goe10</A>]) has been postponed several times.
+Dissatisfaction with the state of Java on the one hand, the prevalence of the powerful JVM on the other hand have given rise to entirely new programming languages exclusively targeting the JVM.
+These languages often combine common Java concepts with advanced programming features, or they even support
+completely different programming paradigms. Hence, most of the languages are in fact multi-paradigm programming languages. 
+Furthermore, they often provide higher-level concurrency abstractions apart from traditional Java multithreading.<a href="#table/3">Table 9.3</a> lists some of the most popular JVM languages aside from Java.</p>
+
+<div class="figure" id="table/3">
+
+<table>
+<thead>
+
+<TR><TH ALIGN="LEFT"><SMALL CLASS="SMALL">
+<SPAN  CLASS="textbf">Language</SPAN> </SMALL></TH>
+<TH ALIGN="LEFT"><SMALL CLASS="SMALL"> <SPAN  CLASS="textbf">Main Paradigms</SPAN> </SMALL></TH>
+<TH ALIGN="LEFT"><SMALL CLASS="SMALL"> <SPAN  CLASS="textbf">Type System</SPAN> </SMALL></TH>
+<TH ALIGN="LEFT"><SMALL CLASS="SMALL"> <SPAN  CLASS="textbf">Main Concurrency Model</SPAN></SMALL></TH>
+</TR>
+
+</thead>
+<tbody>
+
+<TR><TD ALIGN="LEFT"><SMALL CLASS="SMALL">
+
+Java </SMALL></TD>
+<TD ALIGN="LEFT"><SMALL CLASS="SMALL">  object-oriented, imperative </SMALL></TD>
+<TD ALIGN="LEFT"><SMALL CLASS="SMALL"> static, strong </SMALL></TD>
+<TD ALIGN="LEFT"><SMALL CLASS="SMALL"> Threads  </SMALL></TD>
+</TR>
+<TR><TD ALIGN="LEFT"><SMALL CLASS="SMALL">
+Groovy </SMALL></TD>
+<TD ALIGN="LEFT"><SMALL CLASS="SMALL">  object-oriented, functional </SMALL></TD>
+<TD ALIGN="LEFT"><SMALL CLASS="SMALL"> dynamic, strong </SMALL></TD>
+<TD ALIGN="LEFT"><SMALL CLASS="SMALL"> various concepts (GPars)  </SMALL></TD>
+</TR>
+<TR><TD ALIGN="LEFT"><SMALL CLASS="SMALL">
+Clojure </SMALL></TD>
+<TD ALIGN="LEFT"><SMALL CLASS="SMALL"> functional </SMALL></TD>
+<TD ALIGN="LEFT"><SMALL CLASS="SMALL"> dynamic, strong </SMALL></TD>
+<TD ALIGN="LEFT"><SMALL CLASS="SMALL"> STM, Agents  </SMALL></TD>
+</TR>
+<TR><TD ALIGN="LEFT"><SMALL CLASS="SMALL">
+Scala </SMALL></TD>
+<TD ALIGN="LEFT"><SMALL CLASS="SMALL"> functional, object-oriented </SMALL></TD>
+<TD ALIGN="LEFT"><SMALL CLASS="SMALL"> static, strong </SMALL></TD>
+<TD ALIGN="LEFT"><SMALL CLASS="SMALL"> Actors </SMALL></TD>
+</TR>
+<TR><TD ALIGN="LEFT"><SMALL CLASS="SMALL">
+Fantom </SMALL></TD>
+<TD ALIGN="LEFT"><SMALL CLASS="SMALL"> object-oriented, functional </SMALL></TD>
+<TD ALIGN="LEFT"><SMALL CLASS="SMALL"> static/dynamic, strong </SMALL></TD>
+<TD ALIGN="LEFT"><SMALL CLASS="SMALL"> Actors  </SMALL></TD>
+</TR>
+<TR><TD ALIGN="LEFT"><SMALL CLASS="SMALL">
+Kotlin </SMALL></TD>
+<TD ALIGN="LEFT"><SMALL CLASS="SMALL"> object-oriented, functional </SMALL></TD>
+<TD ALIGN="LEFT"><SMALL CLASS="SMALL"> static, strong </SMALL></TD>
+<TD ALIGN="LEFT"><SMALL CLASS="SMALL"> Threads (Actors soon)  </SMALL></TD>
+</TR>
+<TR><TD ALIGN="LEFT"><SMALL CLASS="SMALL">
+Ceylon </SMALL></TD>
+<TD ALIGN="LEFT"><SMALL CLASS="SMALL"> object-oriented, imperative </SMALL></TD>
+<TD ALIGN="LEFT"><SMALL CLASS="SMALL"> static, strong </SMALL></TD>
+<TD ALIGN="LEFT"><SMALL CLASS="SMALL"> Threads  </SMALL></TD>
+</TR>
+</tbody>
+
+</table>
+
+<p class="caption">Table 9.3: Popular stand-alone languages for the JVM.</p>
+
+</div>
+
+<P>
+<a href="http://groovy.codehaus.org/">Groovy</a> incorporates concepts from Python, Ruby, Perl, and Smalltalk.
+It is a dynamic scripting language for the JVM. 
+With GPars, Groovy provides a very advanced concurrency library. It supports many of the concepts we have seen, including actors, dataflow concurrency constructs, STM, agents, Fork/Join abstractions, asynchronous background tasks, and concurrent/parallel data structures.
+
+<P>
+Scala is a multi-paradigm language built on functional and object-oriented concepts. We have already seen in <a href="index.html#chapter/5">chapter 5</a> that Scala supports the actor model for concurrency. As Scala also supports the usage of Java APIs,
+also low-level threading is possible. So far, Scala is the most popular general replacement language for
+Java and gains a foothold also in enterprise environments.
+Clojure is a Lisp dialect for the JVM with a strong focus on concurrency and functional concepts, as seen in in <a href="index.html#chapter/5">chapter 5</a>.
+<a href="http://ceylon-lang.org/">Ceylon</a> is a Java-inspired language that is designed for large application programming. 
+<a href="http://www.jetbrains.com/kotlin/">Kotlin</a> is a general-purpose language for the JVM with a strong emphasis on concise code and typing. Kotlin uses regular Java threads for concurrency.
+<a href="http://fantom.org/">Fantom</a> incorporates object-oriented principles enhanced with mixins (partially implemented interfaces), functional concepts and varying typing principles.  
+Fantom provides strong concurrency support by using the actor model and message passing. 
+Additionally, Fantom supports the notion of immutability as core concept of the language.    
+
+<P>
+Most of the alternative JVM languages allow the usage of the standard Java library components, either directly or indirectly via proxy constructs.
+Consequently, many libraries (e.g. database drivers) originally designed for Java can be utilized.
+This also works vice versa in several cases, when components developed in a non-Java language can be integrated into Java applications, thanks to exported Java interfaces.
+The byte code compatibility of the languages does not just allow to run application components developed
+with different languages inside the same JVM. 
+It also enables the gradual redesign of legacy applications into new languages, without changing the underlying platform.
+
+<P>
+But the concept of virtual machines for byte code execution is not limited to Java. 
+Microsoft's .NET platform sets similar objectives with their CLR.
+The separation of a virtual machine and different programming languages that compile to the same byte code for that virtual machine provides independence of hardware architectures, general availability and versatility.
+The virtual machine designers can thus focus on efficient execution and performance optimizations on various
+architectures. At the same time, programming languages can be designed that strive for higher abstractions and
+incorporate advanced language concepts. 
+This is particularly interesting for web application development, where "bare metal" coding is not required. 
+
+<P>
+The recently initiated EU project <a href="http://www.release-project.eu/">RELEASE</a> evaluates the 
+future usage of Erlang's actor model for architectures with massively parallel cores.
+This primarily addresses the Erlang virtual machine, which currently only scales to a limited number of cores available. Especially the mapping of huge numbers of actors mapped to hundreds of cores and the performance
+of message passing between actors has to be estimated. The project also covers distribution and deployment
+concerns and the capability of the virtual machine to build heterogeneous clusters. 
+
+<P>
+<a href="https://github.com/smarr/RoarVM">RoarVM</a>, another academic project related to virtual machines and concurrency, is a manycore virtual machine for Smalltalk. Ongoing research evaluates how various concurrency models can be implemented efficiently on a single virtual machine&nbsp;[<A
+ HREF="0_bibliography.html#Marr2012">Mar12</A>] for manycore systems.
+
+<h3 id="newtakes">New Takes on Concurrency and Distributed Programming</h3>
+
+<p><a href="index.html#chapter/5">Chapter 5</a> outlined most of the prevailing approaches towards concurrency. Many emerging 
+programming languages pick up one of the concepts that provide higher abstractions than low-level multithreading.
+Concurrent and distributed programming is about to become one of the biggest challenges of our time to be faced for computing in general.
+As a result, there is still much ongoing research effort in finding programming models that tackle concurrency and distribution more naturally. While some specifically target multi-core concurrency, others
+address concurrency more generally as an intrinsic property of distributed computing.
+We now take a look at some of these concepts and study their original ideas.  
+</p>
+
+<h4 id="emergence">Harnessing Emergence and Embracing Nondeterminism</h4>
+<P>
+Ungar et al.&nbsp;[<A
+ HREF="0_bibliography.html#Ungar2010">Ung10</A>] suggest a programing model for multi-core systems that embraces nondeterminism
+and supports emergence.
+It follows the example of natural phenomenons such as bird flocks or ant colonies. 
+In these systems, a large number of entities interact based on a common set of rules, each one with an individual view of the world and in an asynchronous style. Still, the systems show coordinated and robust behavior without any
+kind of explicit synchronization among entities, which is known as emergence.
+Ungar et al. argue that existing approaches towards concurrency focus too much on taming indeterminacy instead of accepting it. 
+
+<P>
+Ungar et al. integrate the notions of emergence into an extended object-oriented programming concept, by introducing so-called ensembles and adverbs as first-class language concepts.
+Ensembles are essentially parallel collections of objects, that can be referenced as a single entity by the outside world. Messages sent to an ensemble are dispatched to all of its members in parallel. 
+Invocations in object-oriented programming are defined by the tuple of caller, callee and invocation arguments.
+For ensembles, this tuple is extended by adverbs that determine additional call semantics. 
+An adverb describes, which or how many members of an ensemble are involved, how invocations are propagated and how results are collected and returned.
+Based on these concepts, a large numbers of objects can interact without explicit application-level synchronization.  
+Ungar et al. have implemented an experimental virtual machine and a JavaScript-inspired language for evaluation.
+They realized that many traditional algorithms are not compatible with this model and have to be redesigned entirely. 
+Also, they identified several ambiguities in the language semantics of ensembles that they want to address in their future work. 
+</p>
+
+<h4 id="acid2">Memories, Guesses and Apologies for Distributed Systems</h4>
+<P>
+In their paper "Building on Quicksand"&nbsp;[<A
+ HREF="0_bibliography.html#Helland2009">Hel09</A>], Helland and Campbell campaign for a paradigm shift for building large-scale, fault-tolerant systems. Due to increased scale and complexity of systems, 
+the scope of failures to deal with has reached critical dimensions. 
+While transparent reliability in confined hardware components (e.g. mirrored disks) appears appropriate, 
+the notion of transactional behavior and synchronous checkpointing for fault-tolerance in large, 
+distributed systems is too complex to be managed anymore, according to Helland and Campbell.
+They also observe that asynchronous checkpointing in order to save latency can not be implemented without
+losing a single, authoritative truth as part of the distributed system.
+With due regard to the CAP theorem, they favor a different approach that can also be applied to 
+distributed programming in general.
+
+<P>
+Instead of relying on traditional ACID properties and serializability, they prefer eventual consistency as an
+integral part of the application itself. Therefore, they introduce the concept of memories, guesses and apologies as well as probabilistic rules for application programming. Memories are the local views that each node of the system has at a given time. Obviously, these views can differ between nodes. 
+Guesses describe the notion that each action of a node is not based on a global view, but only on its own memories. Ideally, these memories resemble the "global truth" of the system as much as possible. However, actions may be executed based on wrong guesses.
+Resulting mistakes must be handled by apologies, either automatically by the application, or involving humans.
+Making guesses and handling apologies is based on probabilistic properties and captured by predefined rules.   
+
+<P>
+Furthermore, Helland and Campbell outline how carefully designed application operations can facilitate this approach, when they 
+provide the following semantics: associative, commutative, idempotent and distributed.
+These properties inherently allow the reorderability and repeatability of operations in the system.
+They make systems also more robust and resilient to typical failures in message-oriented distributed systems&nbsp;[<A
+ HREF="0_bibliography.html#Helland2012">Hel12</A>].
+Helland and Campbell favor these operations instead of explicit mutable states for application design.  
+They demonstrate how traditional business applications, including bank accounting, can be described and realized using this approach.  </p>
+
+<h4 id="calm">Consistency and Logical Monotonicity</h4>
+<P>
+The group of Hellerstein addresses the challenge of consistency and parallelism in distributed systems 
+by applying declarative/logic programming and monotonicity analyses&nbsp;[<A
+ HREF="0_bibliography.html#Hellerstein2010">Hel10</A>]. 
+They believe that declarative database query languages, that are able to parallelize natuarlly, 
+can provide an appropriate programming paradigm for distributed and concurrent systems, 
+when combined with temporal awareness.  
+
+<P>
+The idea is to accept eventual consistency whenever possible, but identify locations where the lack of strong
+consistency results in unacceptable consistency bugs.
+Therefore, they introduce the notion of consistency as logical monotonicity. 
+Based on the theory of relational databases and logic programming, a program can be defined as monotonic or 
+non-monotonic. A monotonic program incrementally produces output elements, never revoking them at a later time due to further procressing. For instance, a projection on a set is a monotonic operation.
+Instead, non-monotonic operations require the entire processing to be completed in order to produce outputs.
+Hence, non-monotonic operations are blocking operations.
+Aggregation or negation operations on sets are examples for non-monotonic operations.
+
+<P>
+Applied to distributed computing, we can also differentiate monotonic and non-monotonic distributed operations.
+Monotonic operations do not rely on message ordering and can tolerate partial delays of messages.
+Instead, non-monotonic operations require coordination mechanisms such as sequence numbers or consensus protocols. For instance, everything that involves distributed counting is a non-monotonic operation with
+the need for coordination and waiting.
+Hellerstein et al. further show that monotonic operations guarantee eventual consistency, independent of the order of messages, while non-monotonic operations require coordination principles in order to assure consistency.
+Based on a declarative language, consistency behaviors can be analyzed and non-monotonic locations can be identified automatically.
+These locations are so-called points of order, that need to be made consistent by adding coordination logic.
+
+<P>
+Hellerstein et al. implemented a prototype&nbsp;[<A
+ HREF="0_bibliography.html#Alvaro2011">Alv11</A>] based on an underlying formal temporal logic concept. The purely declarative prototype uses a domain-specific subset of Ruby due to syntax familiarity. 
+</p>
+
+<h4 id="dataflow">Distributed Dataflow Programming</h4>
+<P>
+Declarative dataflow programming provides a concurrency model with inherent coordination, 
+entirely hidden from the developer.  
+Massively parallel data-centric computing frameworks such as MapReduce&nbsp;[<A
+ HREF="0_bibliography.html#Dean2008">Dea08</A>] have shown
+the strong points of dataflow programming.
+However, programming abstractions like MapReduce heavily constrain the expressiveness compared to pure, non-distributed dataflow languages. Thus, only a small amount of existing algorithms can be applied for MapReduce-based computations.  
+Combining an expressive programming model including dataflow concurrency with a scalable and fault-tolerant distributed execution engine represents a sweet spot for programming in the large.
+
+<P>
+One approach that addresses this demand is the Skywriting scripting language&nbsp;[<A
+ HREF="0_bibliography.html#Murray2010">Mur10</A>] and
+the CEIL execution engine&nbsp;[<A
+ HREF="0_bibliography.html#Murray2011">Mur11</A>]. 
+Skywriting is a language that resembles JavaScript syntactically, but is purely functional by design. 
+As opposed to other data-centric computation languages such as MapReduce, Skywriting is Turing-powerful.
+It provides support for (sub-)task spawning, explicit future references and a dereference operator.
+Task spawning yields future references that can be dereferenced later on, providing implicit synchronization.
+Task execution is idempotent and deterministic, so that functional purity is not comprimised. 
+
+<P>
+The underlying CEIL execution engine provides cooperative task farming and implicitly generates acyclic graphs
+of task dependencies. It also schedules tasks to available worker machines and provides transparent coordination
+and synchronization. A set of rules enforces schedulability by managing the dependencies between spawned tasks and their inputs and outputs. For instance, the dependency graph can not contain cycles, nor can a task become orphaned. The execution engine also provides fault-tolerant features including re-execution of tasks in case of worker crashes and master replication for master fail-overs.   
+
+<P>
+Murray et al. argue that the Skywriting language combined with the CEIL engine allows the implementation of imperative, iterative and recursive algorithms that run on large clusters. 
+Thanks to declarative concurrency, the implementers of algorithms do not have to reason about coordination and synchronization.   
+</P>
+
+<h4 id="frp">Functional Relational Programming</h4>
+<P>
+Brooks and Frederick&nbsp;[<A
+ HREF="0_bibliography.html#Brooks1987">Bro87</A>] identify complexity as one of the four fundamental difficulties of software engineering next to conformity, changeability and invisibility. Complexity is further divided into essential and accidental complexity. 
+Accidental complexity is complexity that we create by ourselves as part of a solution when building systems.
+In contrast, essential complexity is an inherent part of the problem to be solved and independent of the solution.
+
+<P>
+Moseley and Marks&nbsp;[<A
+ HREF="0_bibliography.html#Moseley2006">Mos06</A>] take up again the notion that complexity is the single major challenge
+for large-scale applications. However, they disagree with Brooks and Frederick by rejecting the statement 
+that most of the complexity of systems is essential.
+Instead, Moseley and Marks argue that it is state, that is primarily responsible for most of the (accidental) complexity. There are secondary properties like flow of control and expressiveness, but they directly relate to state.
+Thus, Moseley and Marks reflect on new ways how state can be limited and managed in order to simplify large-scale systems.
+They propose essential logic, essential state and accidental state and control as the 
+three components of a simpler architecture.  
+Essential logic ("behavior") is business logic, that is not concerned with state at all. It only defines relations, pure functions and integrity constraints.  
+Essential state ("state") is a relational definition of stateful components of the system. It is defined by schemata for system inputs and subsequential state updates and state changes.
+Accidental state and control is a specification, where state should be used and what controls should be applied.
+However, it does not affect the logic.
+So interactions with the system result in changes of essential state, which in turn may trigger actions in the other components. As a result, the essential logic may execute operations that affect the system output.
+For implementations, Moseley and Marks suggest a relational, logic-driven programming model for most of the parts. Pure, functional programming can be added for some parts of the essential logic.
+
+<P>
+This idea, also known as functional relational programming, represents an extreme approach on how to isolate and handle state and it does not resemble any of the popular programming models.
+It rejects the notion of coupling state and behavior, that characterizes object-oriented programming. Instead, functional relational programming takes an entirely declarative route, mainly resting upon relational principles and to minor extend the usage of side-effect free functional programming constructs.
+It is still uncertain, whether this model will soon immerse into mainstream development models for application 
+programming. However, the strong focus on declarative state handling represents a coining attribute that should be kept in mind.  </p>

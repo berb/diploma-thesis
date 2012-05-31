@@ -1,0 +1,320 @@
+<title>2.1 The World Wide Web</title>
+
+<meta charset="utf-8">
+
+<link rel="stylesheet" href="../style.css">
+
+<link rel="prev" href="020_index.html"> 
+<link rel="next" href="022_webapps.html"> 
+
+<script src="../script.js"></script>
+
+<h2 id="www">2.1 The World Wide Web</h2>
+
+<p>The Internet and the WWW have become the backbone of our modern society and
+economy. The WWW is a distributed system of interlinked hypermedia
+resources in the Internet. It is based on a set of different, related
+technologies. We will have a brief look on the most important protocols and
+formats in this section, including Uniform Resource Identifiers (URIs), HTTP and HTML.</p>
+
+<h3 id="uri">Uniform Resource Identifiers</h3>
+
+<p>URI, currently specified in RFC 3986&nbsp;[<A
+ HREF="0_bibliography.html#rfc3986">BL05</A>], are strings that are used to reference resources. In terms of
+distributed systems, a URI has three distinct roles - naming, addressing,
+and identifying resources. We will focus on URI identifying resources in
+the WWW, although they can be used for other abstract or physical entities
+as well. According to the
+specification, a URI consists of five parts: <SPAN  CLASS="textit">scheme</SPAN>,
+<SPAN  CLASS="textit">authority</SPAN>, <SPAN  CLASS="textit">path</SPAN>, <SPAN  CLASS="textit">query</SPAN> and <SPAN  CLASS="textit">fragment</SPAN>.
+However, only <SPAN  CLASS="textit">scheme</SPAN> and <SPAN  CLASS="textit">path</SPAN> are mandatory, the other parts
+are optional.
+<SPAN  CLASS="textit">Scheme</SPAN> is declaring the type of the URI and thus determines the
+meaning of the other parts of the URI.
+If used, <SPAN  CLASS="textit">authority</SPAN> points to the responsible authority of the
+referenced resource. In case of <TT>http</TT> as scheme, this part becomes
+mandatory and contains the host of the web server hosting the resource. It can
+optionally contain a port number (80 is implied for <TT>http</TT>) and authentication data (deprecated). 
+The mandatory <SPAN  CLASS="textit">path</SPAN> section is used to address the resource within the
+scope of the <SPAN  CLASS="textit">scheme</SPAN> (and <SPAN  CLASS="textit">authority</SPAN>). It is often structured
+hierarchically. The optional <SPAN  CLASS="textit">query</SPAN> part provides non-hierarchical data
+as part of the resource identifier. <SPAN  CLASS="textit">Fragment</SPAN>s can be used to
+point to a certain part within the resource. 
+The following example is adapted from RFC 3986&nbsp;[<A
+ HREF="0_bibliography.html#rfc3986">BL05</A>] and makes use of
+all five parts:
+
+<pre>
+        http://example.com:8080/over/there?search=test#first
+         \_/   \______________/\_________/ \_________/ \__/
+          |           |            |            |        |
+       scheme     authority       path        query   fragment
+</pre>
+       
+<p>It identifies a web resource (scheme is <TT>http</TT>), that is hosted on the
+<TT>example.com</TT> (on port 8080). The resource path is <TT>/over/there</TT>
+and the query component contains the key/value pair <TT>search=test</TT>.
+Furthermore, the <TT>first</TT> fragment of the resource is referenced.</p>
+
+
+<h3 id="http">The Hypertext Transfer Protocol</h3>
+
+<p>The HTTP is an application-level protocol that represents the foundation
+of communication for the WWW on top of TCP/IP. 
+HTTP, as defined in RFC 2616&nbsp;[<A
+ HREF="0_bibliography.html#rfc2616">Fie99</A>], is a stateless protocol and
+complies with a client/server architecture and a request/response communication model.
+Servers host resources that are identified by URI and can be accessed by
+clients. The client issues an HTTP request to the server which
+in return provides an HTTP response. The communication model limits
+the possible message patterns to single request/response cycles that are
+always initiated by the client.
+Apart from clients and servers, HTTP also describes optional intermediaries, so
+called proxies. These components provide additional features such as caching or
+filtering. Proxies combine features of a client and a server and are thus
+often transparent for the clients and servers in terms of communication.</p>
+
+<p>
+HTTP requests and responses have a common structure. Both start with a request
+line respectively status line. The next part contains a set of header lines that
+include information about the request 
+respectively response and about the entity.</p>
+
+<p>The entity is an optional body of an HTTP message that contains
+payload such as a representation of the resource. While the first two parts of
+an HTTP message are text-based, the entity can be any set of bytes. HTTP
+request lines contain a request URI and a method. There are different HTTP methods
+that provide different semantics when applied to a resource, as shown in
+<a href="#table/1">table 2.1</a>.</p>
+
+<div class="figure" id="table/1">
+
+<table>
+
+<thead>
+
+<TR><TH ALIGN="LEFT"><SPAN  CLASS="textbf">Method</SPAN></TH>
+<TH ALIGN="LEFT" VALIGN="TOP" WIDTH=142><SPAN  CLASS="textbf">Usage</SPAN></TH>
+<TH ALIGN="CENTER"><SPAN  CLASS="textbf">Safe</SPAN></TH>
+<TH ALIGN="CENTER"><SPAN  CLASS="textbf">Idempotent</SPAN></TH>
+<TH ALIGN="CENTER"><SPAN  CLASS="textbf">Cachable</SPAN></TH>
+</TR>
+
+</thead>
+
+<tbody>
+
+<TR><TD ALIGN="LEFT"><TT>GET</TT></TD>
+<TD ALIGN="LEFT" VALIGN="TOP" WIDTH=142>This is the most common method of the WWW. It is used for
+fetching resource representations.</TD>
+<TD ALIGN="CENTER">&#10003;</TD>
+<TD ALIGN="CENTER">&#10003;</TD>
+<TD ALIGN="CENTER">(&#10003;)</TD>
+</TR>
+<TR><TD ALIGN="LEFT"><TT>HEAD</TT></TD>
+<TD ALIGN="LEFT" VALIGN="TOP" WIDTH=142>Essentially, this method is the same as <TT>GET</TT>, however
+the entity is omitted in the response.</TD>
+<TD ALIGN="CENTER">&#10003;</TD>
+<TD ALIGN="CENTER">&#10003;</TD>
+<TD ALIGN="CENTER">(&#10003;)</TD>
+</TR>
+<TR><TD ALIGN="LEFT"><TT>PUT</TT></TD>
+<TD ALIGN="LEFT" VALIGN="TOP" WIDTH=142>This method is used for creating or updating existing resources
+with new representations.</TD>
+<TD ALIGN="CENTER">&nbsp;</TD>
+<TD ALIGN="CENTER">&#10003;</TD>
+<TD ALIGN="CENTER">&nbsp;</TD>
+</TR>
+<TR><TD ALIGN="LEFT"><TT>DELETE</TT></TD>
+<TD ALIGN="LEFT" VALIGN="TOP" WIDTH=142>Existing resources can be removed with <TT>DELETE</TT></TD>
+<TD ALIGN="CENTER">&nbsp;</TD>
+<TD ALIGN="CENTER">&#10003;</TD>
+<TD ALIGN="CENTER">&nbsp;</TD>
+</TR>
+<TR><TD ALIGN="LEFT"><TT>POST</TT></TD>
+<TD ALIGN="LEFT" VALIGN="TOP" WIDTH=142><TT>POST</TT> is used to create new resources. Due to its lack
+of idempotence and safety, it also often used to trigger arbitrary actions.</TD>
+<TD ALIGN="CENTER">&nbsp;</TD>
+<TD ALIGN="CENTER">&nbsp;</TD>
+<TD ALIGN="CENTER">&nbsp;</TD>
+</TR>
+<TR><TD ALIGN="LEFT"><TT>OPTIONS</TT></TD>
+<TD ALIGN="LEFT" VALIGN="TOP" WIDTH=142>Method provides meta data about a resource and available
+representations.</TD>
+<TD ALIGN="CENTER">&#10003;</TD>
+<TD ALIGN="CENTER">&#10003;</TD>
+<TD ALIGN="CENTER">&nbsp;</TD>
+</TR>
+
+</tbody>
+
+</table>
+
+<p class="caption">Table 2.1: A table of the official HTTP 1.1 methods. In terms of RFC 2616 a method is <SPAN  CLASS="textit">safe</SPAN>,
+when a request using this method does not change any state on the server. If
+multiple dispatches of a request result in the same side effects than a single dispatch, 
+the request semantics is called <SPAN  CLASS="textit">idempotent</SPAN>. If a request method provides
+<SPAN  CLASS="textit">cacheability</SPAN>, clients may store responses according to the HTTP
+caching semantics.</p>
+
+</div>
+
+<p>In the subsequent HTTP response, the server informs the client about the outcome
+of a request by using predefined status codes. The classes of status codes can
+be seen in <a href="#table/2">table 2.2</a>.</p>
+
+
+<div class="figure" id="table/2">
+
+<table>
+
+<thead>
+
+<TR><TH ALIGN="LEFT"><SPAN  CLASS="textbf">Range</SPAN></TH>
+<TH ALIGN="LEFT"><SPAN  CLASS="textbf">Status Type</SPAN></TH>
+<TH ALIGN="LEFT" VALIGN="TOP" WIDTH=113><SPAN  CLASS="textbf">Usage</SPAN></TH>
+<TH ALIGN="LEFT" VALIGN="TOP" WIDTH=142><SPAN  CLASS="textbf">Example Code</SPAN></TH>
+</TR>
+
+</thead>
+
+<tbody>
+
+<TR><TD ALIGN="LEFT"><TT>1xx</TT></TD>
+<TD ALIGN="LEFT">informational</TD>
+<TD ALIGN="LEFT" VALIGN="TOP" WIDTH=113>Preliminary response codes</TD>
+<TD ALIGN="LEFT" VALIGN="TOP" WIDTH=142><TT>100
+Continue</TT></TD>
+</TR>
+<TR><TD ALIGN="LEFT"><TT>2xx</TT></TD>
+<TD ALIGN="LEFT">success</TD>
+<TD ALIGN="LEFT" VALIGN="TOP" WIDTH=113>The request has been successfully processed.</TD>
+<TD ALIGN="LEFT" VALIGN="TOP" WIDTH=142><TT>200 OK</TT></TD>
+</TR>
+<TR><TD ALIGN="LEFT"><TT>3xx</TT></TD>
+<TD ALIGN="LEFT">redirection</TD>
+<TD ALIGN="LEFT" VALIGN="TOP" WIDTH=113>The client must dispatch additional requests
+to complete the request.</TD>
+<TD ALIGN="LEFT" VALIGN="TOP" WIDTH=142><TT>303 See Other</TT></TD>
+</TR>
+<TR><TD ALIGN="LEFT"><TT>4xx</TT></TD>
+<TD ALIGN="LEFT">client error</TD>
+<TD ALIGN="LEFT" VALIGN="TOP" WIDTH=113>Result of an erroneous request caused by the
+client.</TD>
+<TD ALIGN="LEFT" VALIGN="TOP" WIDTH=142><TT>404 Not Found</TT></TD>
+</TR>
+<TR><TD ALIGN="LEFT"><TT>5xx</TT></TD>
+<TD ALIGN="LEFT">server error</TD>
+<TD ALIGN="LEFT" VALIGN="TOP" WIDTH=113>A server-side error occured (not caused by this
+request being invalid).</TD>
+<TD ALIGN="LEFT" VALIGN="TOP" WIDTH=142><TT>503 Service Unavailable</TT></TD>
+</TR>
+
+</tbody>
+
+</table>
+
+<p class="caption">Table 2.2: A table of the code ranges of HTTP response codes. The first digit
+determines the status type, the last two digits the exact response code.</p>
+
+</div>
+
+<p>A simple request/response exchange can be seen in the listing below as an example: </p>
+
+<p><pre>GET /html/rfc1945 HTTP/1.1
+Host: tools.ietf.org
+User-Agent: Mozilla/5.0 (Ubuntu; X11; Linux x86_64; rv:9.0.1) Gecko/20100101 Firefox/9.0.1
+Accept: text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8
+Accept-Language: de-de,de;q=0.8,en-us;q=0.5,en;q=0.3
+Accept-Encoding: gzip, deflate
+Accept-Charset: ISO-8859-1,utf-8;q=0.7,*;q=0.7
+Connection: keep-alive
+If-Modified-Since: Sun, 13 Nov 2011 21:13:51 GMT
+If-None-Match: "182a7f0-2aac0-4b1a43b17a1c0;4b6bc4bba3192"
+Cache-Control: max-age=0
+
+HTTP/1.1 304 Not Modified
+Date: Tue, 17 Jan 2012 17:02:44 GMT
+Server: Apache/2.2.21 (Debian)
+Connection: Keep-Alive
+Keep-Alive: timeout=5, max=99
+Etag: "182a7f0-2aac0-4b1a43b17a1c0;4b6bc4bba3192"
+Content-Location: rfc1945.html
+Vary: negotiate,Accept-Encoding</pre></p>
+<p>We will now have a closer look at two advanced features of HTTP that are
+interesting for our later considerations, namely connection handling and 
+chunked encoding.</p>
+
+<h4 id="con">HTTP Connection Handling</h4>
+<p> 
+As already mentioned, HTTP uses TCP/IP as underlying transport protocol. We will
+now examine the exact usage of TCP sockets for HTTP requests. The previous
+specifications of HTTP have suggested a separate socket connection for each
+request/response cycle. Adding the overhead of establishing a TCP
+connection for each request leads to poor performance and missing
+reusability of existing connections. The non-standard <TT>Connection:
+Keep-Alive</TT> header was a temporary workaround, but the current HTTP&nbsp;1.1
+specification has addressed this issue in detail. HTTP&nbsp;1.1 introduced
+<SPAN  CLASS="textit">persistent connections</SPAN> as default. That is, the underlying TCP
+connection of an HTTP request is reused for subsequent HTTP requests.
+<SPAN  CLASS="textit">Request pipelining</SPAN> further improves throughput of persistent
+connections by allowing to dispatch multiple requests, without awaiting
+for responses to prior requests. The server then responds
+to all incoming request in the same sequential order.
+Both mechanisms have improved the
+performance and decreased latency problems of web applications. But the
+management of multiple open connections and the processing of pipelined requests
+has revealed new challenges for web servers as we see in chapter <a href="index.html#chapter/4">4</a>.</p>
+
+
+<h4 id="chunked">HTTP Chunked Transfer Encoding</h4>
+<p>An HTTP message must contain the length of its entity, if any. In HTTP&nbsp;1.1, this is
+neccessary for determining the overall length of a message
+and detecting the next message of a persistent connection. Sometimes, the exact
+length of an entity cannot be determined a priori. This is especially important
+for content that is generated dynamically or for entities that are compressed on-the-fly.
+Therefore, HTTP provides alternative transfer encodings. When <SPAN  CLASS="textit">chunked
+transfer encoding</SPAN> is used, the client or server streams chunks of
+the entity sequentially. The length of the next chunk to expect is prepended to the
+actual chunk. A chunk length of <SPAN CLASS="MATH">0</SPAN> denotes the end of the entity. This
+mechanism allows the transfer of generated entities with arbitrary length.</p>
+
+
+<h3 id="webformat">Web Formats</h3>
+<p>HTTP does not restrict the document formats to be used for entities. However, the core idea of the WWW is based on hypermedia, thus most of the formats are hypermedia-enabled. The single most important format is the HTML and its descendants. </p>
+
+<h4 id="html">Hypertext Markup Language</h4>
+<p>HTML&nbsp;[<A
+ HREF="0_bibliography.html#Jacobs1999">Jac99</A>] is a markup language derived from the SGML&nbsp;[<A
+ HREF="0_bibliography.html#ISO1986">ISO86</A>] and influenced by the XML&nbsp;[<A
+ HREF="0_bibliography.html#Bray2008">Bra08</A>]. HTML provides 
+a set of elements, properties and rules for describing web pages textually.
+A browser parses the HTML document, using its structural semantics for rendering a visual representation for humans. 
+HTML supports hypermedia through hyperlinks and interactive forms. Also, media objects such as images can be used in an HTML document. 
+The appearance and style of an HTML document can be customized by using CSS&nbsp;[<A
+ HREF="0_bibliography.html#Meyer2001">Mey01</A>].
+For more dynamic user interfaces and interactive behavior, HTML documents can be enriched with embedded code of scripting languages, such as <SPAN  CLASS="textit">JavaScript</SPAN>&nbsp;[<A
+ HREF="0_bibliography.html#ECMAInternational1999">ECM99</A>]. For instance, it can be used to programmatically load new contents in the background, without a complete reload of the page. 
+This technique, also known as AJAX, has been one of the keys for more responsive user interfaces. 
+It thus enables web applications to resemble interfaces of traditional desktop applications.</p>
+
+<h4 id="html5">HTML5</h4>
+<p>
+The fifth revision of the HTML standard&nbsp;[<A
+ HREF="0_bibliography.html#Hyatt2009">Hya09</A>] introduces several markup improvements (e.g. semantic tags), better multimedia content support,
+but most notably a rich set of new APIs. These APIs address various features including client-side storage, offline support, device sensors for context awareness
+and improved client-side performance.
+The Web Sockets API&nbsp;[<A
+ HREF="0_bibliography.html#Hickson2009">Hic09a</A>] complements the traditional HTTP request/response communication pattern
+with a low latency, bidirectional, full-duplex socket based on the WebSocket protocol&nbsp;[<A
+ HREF="0_bibliography.html#RFC6455">Fet11</A>].
+This is especially interesting for real-time web applications.</p>
+
+<h4 id="generic">Generic Formats</h4>
+<p>Besides proprietary and customized formats, web services often make use of generic, structured formats such as XML and JSON&nbsp;[<A
+ HREF="0_bibliography.html#RFC4627">Cro06</A>].
+XML is a comprehensive markup language providing a rich family of related technologies, like validation, transformation or querying.
+JSON is one of the leightweight alternatives that focuses solely on the succinct representation of structured data.
+While there is an increasing interest in leightweight formats for web services and messages, XML provides still the most extensive
+tool set and support.</p>
+

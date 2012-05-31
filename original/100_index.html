@@ -1,0 +1,70 @@
+<title>10. Conclusion</title>
+
+<meta charset="utf-8">
+
+<link rel="stylesheet" href="../style.css">
+
+<link rel="prev" href="093_summary.html"> 
+<link rel="next" href="0_bibliography.html"> 
+
+<script src="../script.js"></script>
+
+<h2 id="conc">10. Conclusion</h2>
+
+<P>
+We claim that concurrency is crucial for scalability, which in turn is inherently critical for large-scale architectures.
+The growing prevalence of web-based applications thus requires both scalable architectures and appropriate
+concepts for concurrent programming. 
+Although web-based applications have always faced inherent parallelism, the concurrency implications 
+for architectures and implementations are gradually changing.</p>
+
+<P>
+The scalability of connection handling is not limited to increasing numbers of connections. 
+For web real-time applications, web architectures are frequently confronted with very strict latency requirements.
+Interaction and notification mechanisms also demand the ability to handle huge numbers of mostly idle connections, in order to support server-side message pushing over HTTP. 
+Also, mobile web applications have a bearing on connection performance and slow down the throughput of web servers.
+Similar requirements emerge for the application logic. Interactive web applications demand communication and coordination between multiple requests inside the business logic. In order to provide low latency responses,
+the application logic must utilize hardware resources as efficiently as possible. This yields highly concurrent
+execution environments for the business logic of web applications.
+Concurrency and scalability also challenge the persistence layer of a web architecture. 
+The persistence layer must not only scale to very large data volumes, it must also handle
+increasingly concurrent read and write operations from the application layer.
+Large-scale web applications make the usage of distributed database systems inevitable. 
+However, distributed database systems further increase the degree of complexity.</p>  
+
+<P>
+This thesis focused on devising an architectural model for scalable web architectures and then providing separate concurrency analyses of three main components: web servers, application servers and storage backends. 
+Horizontal scalability and high availability have been the main requirements for the architectural design.  
+We rejected a monolithic architecture due to complexity and scalability issues and campaigned for a structured, loosely coupled approach. 
+Hence, the architecture is separated into functionally distinct components. Each of the components can be scaled separately and independently of other components.
+The components include load balancers, reverse caches, web servers, application servers, caching services, storage
+backends, background worker services, and an integration component for external services. 
+For the most part, components are coupled using a message-based middleware.</p>
+
+<P>
+We then provided a more detailed analysis of the concurrency internals for web servers, application servers and storage backends. We determined that massive I/O parallelism is the main challenge for web servers. We validated thread-based, event-driven and combined architectures for highly concurrent web servers. Next, we called attention to the duality argument of threads and events. 
+We surmounted the general threads vs. events discussion and outlined the benefits of cooperative multithreading
+and asynchronous/non-blocking I/O operations for programming highly concurrent I/O-bound applications.</p>
+
+<P>
+For the implementation of concurrent application logic, we assessed several programming concepts for concurrency from a generic viewpoint.  
+The most common form of concurrent programming, based on threads, locks and shared state, is 
+difficult and error-prone due to various reasons. Its usage should be limited to components where it is essential and inevitable. This includes low-level architecture components and the foundations for high-level concurrency  libraries. 
+For the actual application logic, higher concurrency abstractions are more advisable.
+Software transactional memory isolates operations on shared states similar to database systems. 
+Hence, it allows lock-free programming and mitigates many problems of traditional multithreading.
+The actor model represents an entirely different approach that isolates the mutability of state. 
+Actors are separate, single-threaded entities that communicate via immutable, asynchronous and guaranteed messaging. They encapsulate state and provide a programming model that embraces message-based distributed computing. Single-threaded event-driven application components are similar to actors--although they don't share the same architectural mind-set. Lesser known approaches include synchronous message passing and dataflow concepts.</p>
+
+<P>
+Storage backends are mainly challenged by the CAP theorem. It disallows guaranteeing consistency and availability at the same time, when partitions must be tolerated at the same time. As a result, applications can either adhere to the conventional ACID properties, but must accept temporary unavailabilities--or they choose eventual consistency and make the application logic resilient to partially stale data.
+We illustrated that distributed database systems are based on relational or non-relational concepts and incorporate mechanisms from the database community and the distributed systems community.</p>
+
+<P>
+We examined the relations between concurrency, scalability and distributed systems in general and outlined the underlying coherencies. 
+We also provided some food for thought--for instance, which upcoming trends might influence future web architectures, and how distributed and concurrent programming can be prospectively handled.</p>
+
+<P>
+Unfortunately, there is neither a silver bullet for the design of scalable architectures, nor for concurrent programming. 
+We have extensively described the more popular approaches. We also compiled a list of recommendations for the design of concurrent and scalable web architectures of the near future. 
+However, concurrency and scalability still remain taxing challenges for distributed systems in general and raise interesting research questions.</p>  

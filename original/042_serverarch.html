@@ -1,0 +1,391 @@
+<title>4.2 Server Architectures</title>
+
+<meta charset="utf-8">
+
+<link rel="stylesheet" href="../style.css">
+
+<link rel="prev" href="041_overview.html"> 
+<link rel="next" href="043_threadsevents.html"> 
+
+
+<script src="../script.js"></script>
+
+<h2 id="42">4.2 Server Architectures</h2>
+
+<p>We have seen different models for socket I/O--and file I/O, in case of a web server for static content.
+Now, we are now in need of models merging I/O operations, CPU-bound activities such as request parsing and request handling into general server architectures.
+
+<P>
+There are traditionally two competitive server architectures--one is based on threads, the other on events. Over time, more sophisticated variants
+emerged, sometimes combining both approaches. There has been a long controversy, whether threads or events are generally the better fundament for 
+high performance web servers&nbsp;[<A
+ HREF="0_bibliography.html#Ousterhout1996">Ous96</A>,<A
+ HREF="0_bibliography.html#Behren2003">vB03a</A>,<A
+ HREF="0_bibliography.html#Welsh2001">Wel01</A>].
+After more than a decade, this argument has been now reinforced, thanks to new scalability challenges and the trend towards multi-core CPUs.  
+
+<P>
+Before we evaluate the different approaches, we introduce the general architectures, the corresponding patterns in use and give some real world examples.
+
+<h3 id="thread">Thread-based Server Architectures</h3>
+
+<p>The thread-based approach basically associates each incoming connection with a separate thread (resp. process). 
+In this way, synchronous blocking I/O is the natural way of dealing with I/O. 
+It is a common approach that is well supported by many programming languages.
+It also leads to a straight forward programming model, because all tasks necessary for request handling can be coded sequentially. 
+Moreover, it provides a simple mental abstraction by isolating requests and hiding concurrency.
+Real concurrency is achieved by employing multiple threads/processes at the same time.  
+
+<P>
+Conceptually, multi-process and multi-threaded architectures share the same principles: each new connection 
+is handled by a dedicated activity. 
+
+<h4 id="mp">Multi-Process Architectures</h4>
+<P>
+A traditional approach to UNIX-based network servers is the process-per-connection model, using a dedicated process for 
+handling a connection&nbsp;[<A
+ HREF="0_bibliography.html#Stevens2003">Ste03</A>]. 
+This model has also been used for the first HTTP server, <a href="http://www.w3.org/Daemon/Implementation/">CERN httpd</a>.
+Due to the nature of processes, they are isolating different requests promptly, as they do not share memory.
+Being rather heavyweight structures, the creation of processes is a costly operation and servers often employ a strategy called preforking.
+When using preforking, the main server process forks several handler processes preemptively on start-up, as shown in <a href="#figure/1">figure 4.1</a>.  
+Often, the (thread-safe) socket descriptor is shared
+among all processes, and each process blocks for a new connection, handles the connection and then waits for the next connection.
+
+<div class="figure" id="figure/1">
+<img src="resources/mp-server.svg" style="width:100%">
+<p class="caption">Figure 4.1: A multi-process architecture that make use of preforking. On startup, the main server process forks several child processes that will later handle requests. A socket
+is created and shared between the processes. Each request handler process waits for new connections to handle
+and thereafter blocks for new connections.</p>
+</div>
+
+<P>
+Some multi-process servers also measure the load and spawn additional requests when needed. However, it is important to note that the heavyweight structure
+of a process limits the maximum of simultaneous connections. The large memory footprint as a result of the connection-process mapping leads to a 
+concurrency/memory trade-off. Especially in case of long-running, partially inactive connections (e.g. long-polling notification requests),
+the multi-process architecture provides only limited scalability for concurrent requests.
+
+<P>
+The popular Apache web server provides a robust multi-processing module that is based on process preforking, Apache-MPM prefork. It is still the default
+multi-processing module for UNIX-based setups of Apache.  
+
+
+<h4 id="mt">Multi-Threaded Architectures</h4>
+
+<P>
+When reasonable threading libraries have become available, new server architectures emerged that replaced heavyweight processes with more leightweight threads.
+In effect, they employ a thread-per-connection model. Although following the same principles, the multi-threaded approach has several important differences.
+First of all, multiple threads share the same address space and hence share global variables and state. 
+This makes it possible to implement mutual features for all request handlers, such as a shared cache for cacheable responses inside the web server. 
+Obviously, correct synchronization and coordination is then required. 
+Another difference of the more leightweight structures of threads is their smaller memory footprint. Compared to the full-blown memory size of an entire process,
+a thread only consumes limited memory (i.e. the thread stack). Also, threads require less resources for creation/termination. 
+We have already seen that the dimensions of a process are a severe problem in case of high concurrency. Threads are generally a more efficient replacement
+when mapping connections to activities.
+
+<div class="figure" id="figure/2">
+<img src="resources/mt-server.svg" style="width:100%">
+<p class="caption">Figure 4.2: A multi-threaded architecture that make use of an acceptor thread. The dedicated acceptor blocks for new socket connections, accepts connections and dispatches them to the worker pool and continues. The worker pool provides a set of threads that handle incoming requests. Worker threads are either handling requests or waiting for new requests to process.</p>
+</div>
+
+<P>
+In practice, it is a common architecture to place a single dispatcher thread (sometimes also called acceptor thread) in front of a pool of threads for connection handling&nbsp;[<A
+ HREF="0_bibliography.html#Stevens2003">Ste03</A>], as shown in <a href="#figure/2">figure 4.2</a>. 
+Thread pools are a common way of bounding the maximum number of threads inside the server.  
+The dispatcher blocks on the socket for new connections. Once established, the connection is passed to a queue of incoming connections.
+Threads from the thread pool take connections from the queue, execute the requests and wait for new connections in the queue.
+When the queue is also bounded, the maximum number of awaiting connections can be restricted. Additional connections will be rejected. While
+this strategy limits the concurrency, it provides more predictable latencies and prevents total overload.  
+
+<P>
+Apache-MPM worker is a multi-processing module for the Apache web server that combines processes and threads. The module spawns several processes and each process
+in turn manages its own pool of threads.
+
+
+<h4 id="scalemt">Scalability Considerations for Multi-Threaded Architectures</h4>
+<p>Multi-threaded servers using a thread-per-connection model are easy to implement and follow a simple strategy.
+Synchronous, blocking I/O operations can be used as a natural way of expressing I/O access. The operating system overlaps multiple threads via preemptively  
+scheduling. In most cases, at least a blocking I/O operation triggers scheduling and causes a context switch, allowing the next thread to continue. 
+This is a sound model for decent concurrency, and also appropriate when a reasonable amount of CPU-bound operations must be executed. 
+Furthermore, multiple CPU cores can be used directly, as threads and processes are scheduled to all cores available. 
+
+<P>
+Under heavy load, a multi-threaded web server consumes large amounts of memory (due to a single thread stack for each connection), and constant context switching causes considerable losses of CPU time. 
+An indirect penalty thereof is increased chance of CPU cache misses.  
+Reducing the absolute number of threads improves the per-thread performance, but limits the overall scalability in terms of maximum simultaneous connections. 
+
+<h3 id="event">Event-driven Server Architectures</h3>
+
+<P>
+As an alternative to synchronous blocking I/O, the event-driven approach is also common in server architectures. Due to the asynchronous/non-blocking 
+call semantics, other models than the previously outlined thread-per-connection model are needed. 
+A common model is the mapping of a single thread to multiple connections. The thread then handles all occurring events from I/O operations of these 
+connections and requests. As shown in <a href="#figure/3">figure 4.3</a>, new events are queued and the thread executes a so-called event loop--dequeuing events from the queue, processing the event,
+then taking the next event or waiting for new events to be pushed. 
+Thus, the work executed by a thread is very similar to that of a scheduler, multiplexing multiple connections to a single flow of execution.  
+
+<div class="figure" id="figure/3">
+<img src="resources/ev-server.svg" style="width:100%">
+<p class="caption">Figure 4.3: This conceptual model shows the internals
+of an event-driven architecture. A single-threaded event loop consumes event after event from the queue 
+and sequentially executes associated event handler code. New events are emitted by external sources such as
+socket or file I/O notifications. Event handlers trigger I/O actions that eventually result
+in new events later.</p>
+</div>
+
+<P>
+Processing an event either requires registered event handler code for specific events,
+or it is based on the execution of a callback associated to the event in advance.
+The different states of the connections handled by a thread are organized in appropriate data structures-- either explicitly using finite state machines
+or implicitly via continuations or closures of callbacks. As a result, the control flow of an application following the event-driven style
+is somehow inverted. Instead of sequential operations, an event-driven program uses a cascade of asynchronous calls and callbacks that get executed on
+events. This notion often makes the flow of control less obvious and complicates debugging.
+
+<P>
+The usage of event-driven server architectures has historically depended on the availability of asynchronous/non-blocking I/O operations on OS level 
+and suitable, high performance event notification interfaces such as epoll and kqueue. 
+Earlier implementations of event-based servers such as the Flash web server by Pai et al&nbsp;[<A
+ HREF="0_bibliography.html#Pai1999">Pai99</A>].
+
+<h4 id="io">Non-blocking I/O Multiplexing Patterns</h4>
+<p>Different patterns have emerged for event-based I/O multiplexing, recommending solutions for highly concurrent, high-performance I/O handling. The patterns generally address the problem of network services to handle multiple concurrent requests. 
+
+<h5 id="reactor">Reactor Pattern</h5>
+<p>The Reactor pattern&nbsp;[<A
+ HREF="0_bibliography.html#Schmidt1995">Sch95</A>] targets <SPAN  CLASS="textit">synchronous, non-blocking I/O</SPAN> handling and relies on an event notification interface.
+On startup, an application following this pattern registers a set of resources (e.g. a socket) and events (e.g. a new connection) it is interested in.
+For each resource event the application is interested in, an appropriate event handler must be provided--a callback or hook method.   
+The core component of the Reactor pattern is a synchronous event demultiplexer, that awaits events of resources using a blocking event notification interface.
+Whenever the synchronous event demultiplexer receives an event (e.g. a new client connection), it notifies a dispatcher and awaits for the next event.
+The dispatcher processes the event by selecting the associated event handler and triggering the callback/hook execution.
+
+<P>
+The Reactor pattern thus decouples a general framework for event handling and multiplexing from the application-specific event handlers.
+The original pattern focuses on a single-threaded execution. This requires the event handlers to adhere to the non-blocking style of operations. 
+Otherwise, a blocking operation can suspend the entire application. Other variants of the Reactor pattern use a thread pool for the event handlers.
+While this improves performance on multi-core platforms, an additional overhead for coordination and synchronization must be taken into account.
+
+
+<h5 id="proactor">Proactor Pattern</h5>
+<p>In contrast, the Proactor pattern&nbsp;[<A
+ HREF="0_bibliography.html#Pyarali1997">Pya97</A>] leverages truly <SPAN  CLASS="textit">asynchronous, non-blocking I/O</SPAN> operations, as provided by interfaces such as <a href="http://www.kernel.org/doc/man-pages/online/pages/man7/aio.7.html">POSIX AIO</a>.
+As a result, the Proactor can be considered as an entirely asynchronous variant of the Reactor pattern seen before.
+It incorporates support for completition events instead of blocking event notification interfaces. 
+A proactive initiator represents the main application thread and is responsible for initiating asynchronous I/O operations. 
+When issuing such an operation, it always registers a completition handler and completition dispatcher.
+The execution of the asynchronous operation is governed by the asynchronous operation processor, an entity that is part of the OS in practice.
+When the I/O operation has been completed, the completition dispatcher is notified. Next, the completition handler processes the resulting event.
+
+<P>
+An important property in terms of scalability compared to the Reactor pattern is the better multithreading support. 
+The execution of completition handlers can easily be handed off to a dedicated thread pool.
+
+<h4 id="scaleev">Scalability Considerations for Event-driven Architectures</h4>
+<p>Having a single thread running an event loop and waiting for I/O notifications has a different impact on scalability 
+than the thread-based approach outlined before. Not associating connections and threads does dramatically decrease the 
+number of threads of the server--in an extreme case, down to the single event-looping thread plus some OS kernel threads for I/O.
+We thereby get rid of the overhead of excessive context switching and do not need a thread stack for each connection.
+This decreases the memory footprint under load and wastes less CPU time to context switching.
+Ideally, the CPU becomes the only apparent bottleneck of an event-driven network application. Until full saturation of resources is archived,
+the event loop scales with increasing throughput. Once the load increases beyond maximum saturation, the event queue begins to stack up as the
+event-processing thread is not able to match up.  
+Under this condition, the event-driven approach still provides a thorough throughput, but latencies of requests increase linearly, due to overload.
+This might be acceptable for temporary load peaks, but permanent overload degrades performance and renders the service unusable.
+One countermeasure is a more resource-aware scheduling and decoupling of event processing, as we will see soon when analysing a staged-based approach.
+
+<P>
+For the moment, we stay with the event-driven architectures and align them with multi-core architectures. While the thread-based model covers both--I/O-based and CPU-based concurrency, the initial event-based architecture solely addresses I/O concurrency. For exploiting multiple CPUs or cores,
+event-driven servers must be further adapted.
+
+<P>
+An obvious approach is the instantiation of multiple separate server processes on a single machine. This is often referred to as the <SPAN  CLASS="textit">N</SPAN>-copy approach 
+for using <SPAN  CLASS="textit">N</SPAN> instances on a host with <SPAN  CLASS="textit">N</SPAN> CPUs/cores. In our case a machine would run multiple web server instances and register all instances at the
+load balancers. A less isolated alternative shares the server socket between all instances, thus requiring some coordination. 
+For instance, an implementation of this approach is available for node.js using the 
+<a href="http://nodejs.org/docs/latest/api/cluster.html">cluster module</a>, 
+which forks multiple instances of an application and shares a single server socket.
+
+<P>
+The web servers in the architectural model have a specific feature--they are 
+stateless, shared-nothing components. Already using an internal cache for dynamic requests requires several changes in the server architecture.
+For the moment, the easier concurrency model of having a single-threaded server and sequential execution semantics of callbacks can be accepted as part of the architecture.
+It is exactly this simple execution model that makes single-threaded applications attractive for developers, as the efforts of coordination
+and synchronization are diminished and the application code (i.e. callbacks) is guaranteed not to run concurrently.
+On the other hand, this characteristic intrinsically prevents the utilization of multiple processes inside a single event-driven application.
+Zeldovich et al. have addresses this issue with <SPAN  CLASS="textit">libasync-smp</SPAN>&nbsp;[<A
+ HREF="0_bibliography.html#Zeldovich2003">Zel03</A>], an asynchronous programming library taking advantage of 
+multiple processes and parallel callback execution. The simple sequential programming model is still preserved. The basic idea is the usage of tokens,
+so-called colors assigned to each callback. Callbacks with different colors can be executed in parallel, while serial execution is guaranteed for 
+callbacks with the same color. Using a default color to all non-labelled callbacks makes this approach backward compatible to programs without any colors.
+
+<P>
+Let us extend our web server with a cache, using the coloring for additional concurrency. Reading and parsing a new request are sequential operations,
+but different requests can be handled at the same time. Thus, each request gets a distinct color (e.g. using the socket descriptor), and the 
+parsing operation of different request can actually happen in parallel, as they are labelled differently. After having parsed the request, the 
+server must check if the required content is already cached. Otherwise, it must be requested from the application server. Checking the cache
+now is a concurrent operation that must be executed sequentially, in order to provide consistency. Hence, the same color label is used 
+for this step for all requests, indicating the scheduler to run all of these operations always serially, and never in parallel.
+This library also allows the callback to execute partially blocking operations. As long as the operation is not labelled with a shared color, 
+it will not block other callbacks directly. The library is backed by a thread pool and a set of event queues, distinguished by colors.
+This solution allows to adhere to the traditional event-driven programming style, but introduces real concurrency to a certain extent.  
+However, it requires the developer to label callbacks correctly. Reasoning about the flows of executions in an event-driven program is already difficult
+sometimes, and the additional effort may complicate this further.   
+
+<h3 id="combined">Combined Approaches</h3>
+<p>The need for scalable architectures and the drawbacks of both general models have led to alternative architectures and libraries incorporating features of both models. 
+
+<h4 id="seda">Staged Event-driven Architecture</h4>
+<P>
+A formative architecture combining threads and events for scalable servers has been designed by Welsh et al.&nbsp;[<A
+ HREF="0_bibliography.html#Welsh2001">Wel01</A>], the so called SEDA.
+As a basic concept, it divides the server logic into a series of well-defined stages, that are connected by queues, as shown in <a href="#figure/4">figure 4.4</a>. Requests are passed
+from stage to stage during processing. Each stage is backed by a thread or a thread pool, that may be configured dynamically. 
+
+<div class="figure" id="figure/4">
+<img src="resources/seda-server.svg" style="width:100%">
+<p class="caption">Figure 4.4: This illustration shows the concept
+of SEDA. In this example, there are two stages, each with a queue for incoming events, an event handler backed by thread pool and a controller that monitors resources. The only interaction between stages is the
+emission of events to the next stage(s) in the pipeline.</p>
+</div>
+
+
+<P>
+The separation favors modularity as the pipeline of stages can be changed and extended easily. Another very important feature of the SEDA design
+is the resource awareness and explicit control of load. The size of the enqueued items per stage and the workload of the thread pool per stage
+gives explicit insights on the overall load factor. In case of an overload situation, a server can adjust scheduling parameters or thread pool sizes.
+Other adaptive strategies include dynamic reconfiguration of the pipeline or deliberate request termination.  
+When resource management, load introspection and adaptivity are decoupled from the application logic of a stage, it is simple to 
+develop well-conditioned services. 
+From a concurrency perspective, SEDA represents a hybrid approach between thread-per-connection multithreading and event-based concurrency.
+Having a thread (or a thread pool) dequeuing and processing elements resembles an event-driven approach. The usage of multiple stages with
+independent threads effectively utilizies multiple CPUs or cores and tends to a multi-threaded environment. From a developer's perspective,
+the implementation of handler code for a certain stage also resembles more traditional thread programming.     
+
+<P>
+The drawbacks of SEDA are the increased latencies due to queue and stage traversal even in case of minimal load.
+In a later retrospective&nbsp;[<A
+ HREF="0_bibliography.html#Welsh2010">Wel10</A>], Welsh also criticized a missing differentiation of module boundaries (stages) 
+and concurrency boundaries (queues and threads).
+This distribution triggers too many context switches, when a requests passes through multiple stages and queues. 
+A better solution groups multiple stages together with a common thread pool. This decreaes context switches and improves response times.
+Stages with I/O operations and comparatively long execution times can still be isolated.  
+
+<P>
+The SEDA model has inspired several implementations, including the generic server framework 
+<a href="http://http//mina.apache.org">Apache MINA</a> and enterprise service buses such as <a href="http://www.mulesoft.com/">Mule ESB</a>.   
+
+
+<h4 id="spl">Special-Purpose Libraries</h4>
+
+Other approaches focused on the drawbacks of threads in general and the problems of available (user-level) threading libraries in particular.
+As we will see soon, most of the scalability problems with threads are associated with shortcomings of their libraries.
+
+<P>
+For instance, the Capriccio threading library by von Behren et al.&nbsp;[<A
+ HREF="0_bibliography.html#Behren2003a">vB03b</A>] promises scalable threads for servers by tackling the main thread issues.
+The problem of extensive context switches is addressed by using a non-preemptive scheduling. Threads eithers yield on I/O operations, or 
+on an explicit yield operation. 
+The stack size of each thread is limited based on prior analysis at compile time. 
+This makes it unnecessary to overprovide bounded stack space preemptively.
+However, unbounded loops and the usage of recursive calls render a complete calculation of stack size apriori impossible. As a workaround, checkpoints are inserted into the code, that determine if a stack overflow
+is about to happen and allocate new stack chunks in that case. The checkpoints are inserted at compile time
+and are placed in a manner that there will never be a stack overflow within the code between two checkpoints.  
+Additionally, resource-aware scheduling is applied that prevents thrashing. Therefore, CPU, memory and file descriptors
+are watched and combined with a static analysis of the resource usage of threads, scheduling is dynamically adapted.
+
+<P>
+Also, hybrid libraries, combining threads and events, have been developed. Li and Zdancewic&nbsp;[<A
+ HREF="0_bibliography.html#Li2007">Li07</A>] have implemented a combined model for Haskell,
+based on concurrency monads. The programming language Scala also provides event-driven and multi-threaded concurrency, that can be combined for server implementations.
+
+
+<div class="figure" id="table/2">
+
+<table>
+
+<thead>
+
+<TR><TH ALIGN="LEFT"></TH>
+<TH ALIGN="CENTER"><SPAN  CLASS="textbf">thread-based</SPAN></TH>
+<TH ALIGN="CENTER"><SPAN  CLASS="textbf">event-driven</SPAN></TH>
+</TR>
+
+</thead>
+
+<tbody>
+
+<TR><TH ALIGN="LEFT"><SPAN  CLASS="textbf">connection/request state</SPAN></TH>
+<TD ALIGN="CENTER">thread context</TD>
+<TD ALIGN="CENTER">state machine/continuation</TD>
+</TR>
+<TR><TH ALIGN="LEFT"><SPAN  CLASS="textbf">main I/O model</SPAN></TH>
+<TD ALIGN="CENTER">synchronous/blocking</TD>
+<TD ALIGN="CENTER">asynchronous/non-blocking</TD>
+</TR>
+<TR><TH ALIGN="LEFT"><SPAN  CLASS="textbf">activity flow</SPAN></TH>
+<TD ALIGN="CENTER">thread-per-connection</TD>
+<TD ALIGN="CENTER">events and associated handlers</TD>
+</TR>
+<TR><TH ALIGN="LEFT"><SPAN  CLASS="textbf">primary scheduling strategy</SPAN></TH>
+<TD ALIGN="CENTER">preemptive (OS)</TD>
+<TD ALIGN="CENTER">cooperative</TD>
+</TR>
+<TR><TH ALIGN="LEFT"><SPAN  CLASS="textbf">scheduling component</SPAN></TH>
+<TD ALIGN="CENTER">scheduler (OS)</TD>
+<TD ALIGN="CENTER">event loop</TD>
+</TR>
+<TR><TH ALIGN="LEFT"><SPAN  CLASS="textbf">calling semantics</SPAN></TH>
+<TD ALIGN="CENTER">blocking</TD>
+<TD ALIGN="CENTER">dispatching/awaiting events</TD>
+</TR>
+
+</tbody>
+
+</table>
+
+<p class="caption">Table 4.2: Main differences between thread-based and event-driven server architectures.</p>
+</div>
+
+
+
+<h3 id="eval">Evaluation</h3>
+So far, we have regarded different architectural principles for building concurrent web servers. When implementing a server for highly concurrent usage,
+one of these models should be applied. However, there are other factors that also influence the actual performance and scalability of the implementation.
+This includes the programming language, the execution environment (e.g. virtual machine) the operating system, the thread libraries that can be used and
+the available means for I/O operations (e.g. support for true asynchronous I/O). 
+For each server architecture, scalable server implementations can be implemented--however, the actual requirements differ. 
+
+<P>
+Pariag et al.&nbsp;[<A
+ HREF="0_bibliography.html#Pariag2007">Par07</A>] have conducted a detailed performance-oriented comparison of thread-based, event-driven and hybrid pipelined servers.
+The thread-based server (knot) has taken advantage of the aforementioned Capriccio library. 
+The event-driven server (<SPAN CLASS="MATH">26#26</SPAN>server) has been designed to support socket sharing
+and multiprocessor support using the N-copy approach. 
+Lastly, the hybrid pipelined server (WatPipe) has been heavily inspired by SEDA, and consists of four stages for serving web requests.
+Pariag and his team then tested and heavily tuned the three servers. Finally, they benchmarked the servers using different scenarios, including
+deliberate overload situations.
+Previous benchmarks have been used to promote either new thread-based or event-driven architectures[<A
+ HREF="0_bibliography.html#Pai1999">Pai99</A>,<A
+ HREF="0_bibliography.html#Welsh2001">Wel01</A>,<A
+ HREF="0_bibliography.html#Behren2003">vB03a</A>],
+often with clear benefits for the new architecture.
+The extensive benchmark of Pariag et al. revealed that all three architectural models can be used for building highly scalable servers,
+as long as thorough tuning and (re-)configuration is conducted. 
+The results also showed that event-driven architectures using asynchronous I/O have still a marginal advantage over thread-based architectures.
+
+<P>
+Event-driven web servers like nginx (e.g. GitHub, WordPress.com), lighttpd (e.g. YouTube, Wikipedia) or 
+<a href="http://www.tornadoweb.org/">Tornado</a> (e.g. Facebook, Quora) 
+are currently very popular and several generic frameworks have emerged that follow this architectural pattern.
+Such frameworks available for Java include <a href="http://www.jboss.org/netty">netty</a> and MINA.   
+
+<P>
+Please note that we do not conduct our own benchmarks in this chapter. Nottingham, one of the editors
+of the HTTP standards, has written an insightful summary, why even handed server benchmarking 
+is extremely hard and costly&nbsp;[<A
+ HREF="0_bibliography.html#Nottingham2011">Not11</A>]. Hence, we solely focus on the architecture concepts and design principles of web servers and confine our considerations to the prior results of Pariag et al.&nbsp;[<A
+ HREF="0_bibliography.html#Pariag2007">Par07</A>].
+
+
+
+

@@ -1,0 +1,92 @@
+<title>3.4 Scaling Web Applications</title>
+
+<meta charset="utf-8">
+
+<link rel="stylesheet" href="../style.css">
+
+<link rel="prev" href="033_archmodel.html"> 
+<link rel="next" href="035_summary.html"> 
+
+<script src="../script.js"></script>
+
+<h2 id="scale">3.4 Scaling Web Applications</h2>
+
+<p>We have regarded the scalability of web applications from an architectural point of view so far. In the next chapters, we will focus on scalability 
+within web architectures, based on the usage of concurrency inside web servers, application servers and
+backend storage systems.  
+
+<P>
+However, there are other factors which influence the scalability and perceived performance of web applications. 
+Therefore, we will provide a brief overview of factors relevant for web site setup and client-side web application design.
+The overview summarizes important strategies outlined in relevant books[<A
+ HREF="0_bibliography.html#Allspaw2010">All10</A>,<A
+ HREF="0_bibliography.html#Abbott2011">Abb11</A>,<A
+ HREF="0_bibliography.html#Abbott2009">Abb09</A>] and a <a href="http://developer.yahoo.com/performance/rules.html">blog article</a> from the 
+Yahoo Developer Network.
+
+<P>
+From a user's perspective, a web applications appears scalable, when it continues to provide the same service and the same quality of service
+independent of the number of concurrent users and load.
+Ideally, a user should not be able to draw any inferences from his experience interacting with the application about the actual service load.
+That is why constant, low-latency responses are important for the user experience. In practice, low round-trip latencies of single request/response cycles
+are essential. More complex web applications mitigate negative impacts by preventing full reloads and through dynamic behaviour,
+such as asynchronous loading of new content and partial update of the user interface (c.f. AJAX).
+Also, sound and reliable application functions and graceful degradation are crucial for user acceptance.
+
+<h3 id="cd">Optimizing Communication and Content Delivery</h3>
+<p>
+First and foremost, it is very important to minimize the number of HTTP requests. Network round trip times, perhaps preceded by connection establishing penalties,
+can dramatically increase latencies and slow down the user experience. Thus, as few requests as necessary should be used in a web application.
+A popular approach is the use of <a href="http://www.alistapart.com/articles/sprites">CSS sprites or images maps</a>. Both approaches load a single image file containing multiple smaller images.
+The client then segments the image and the smaller tiles can be used and rendered independently. This technique allows to provide a single
+image containing all button images and graphical user interfaces elements as part of a combined image.
+Another way of reducing requests is the inlining of external content. For instance, the data URI scheme&nbsp;[<A
+ HREF="0_bibliography.html#RFC2397">Mas98</A>] allows to embed arbitrary content
+as a base64-encoded URI string. In this way, smaller images (e.g. icons) can be directly inlined into an HTML document.
+Browsers often limit the number of parallel connections to a certain host, as requested in RFC 2616&nbsp;&nbsp;[<A
+ HREF="0_bibliography.html#rfc2616">Fie99</A>]. So when multiple resources have to be accessed, it can help to provide
+several domain names for the same server (e.g. static1.example.com, static2.example.com). Thus, resources can be identified 
+using different domain names and clients can increase the number of parallel connections when loading resources.         
+
+<P>
+Another important strategy is to embrace caching whenever possible. As a rule of thumb static assets should be indicated as not expiring. 
+Static assets are images, stylesheet files, JavaScript files and other static resources used to complement the site. These assets are
+generally not edited anymore, once online. Instead, they get replaced by other assets when the site gets updated. This yields some immutable character for static assets, that allows us to cache aggressively.
+Consequently, static asset caching narrows the traffic between web browsers and web servers almost exclusively to dynamically generated content after some time. 
+For dynamic content, web servers should provide useful headers (e.g. <TT>ETag</TT>, <TT>Last-Modified</TT>) allowing conditional semantics 
+in subsequent requests. Reverse caching proxies as part of the web architecture can also cache generated content and speed up responses.     
+
+<P>
+The use of CDN helps to off-load the machines serving static assets and shortens response times. As CDN are not just caching reverse proxies,
+they also provide geographical distribution and route requests to the nodes in the closest proximity of the client. 
+Using public repositories for popular assets such as JavaScript libraries (e.g. jQuery) is also beneficial. These repositories are not just backed 
+by large CDN, their use also increases the chance of being already cached. 
+
+<P>
+On-the-fly compression of content can further reduce size with marginal CPU overhead. This is helpful for text-based formats and especially efficient
+in case of formats with verbose syntax (e.g. HTML, XML). 
+
+<h3 id="site">Speeding up Web Site Performance</h3>
+<P>
+There are also some advice for the structure of HTML files, improving the user experience. It is preferable to reference external stylesheets at the top of the 
+HTML file, and reference JavaScript files at the bottom. When parsing and rendering the site, the browser will first load stylesheets and then the scripts,
+depending on the number of parallel requests allowed (see above). This order helps to render the page progressively and then include interactive elements.
+Also, JavaScript and CSS resources should not be inlined in the HTML file, but externalized to files. This helps caching efforts and minimizes 
+the HTML file size. Text-based assets like stylesheets and JavaScript files should also be textually minified by removing whitespaces and renaming
+variable names to shortest names possible, effectively reducing file sizes in production environments.
+Different timings of content loading can also affect the user experience. Rich user interfaces relying on AJAX-based content often provide a basic user interface
+on the first load. After that, actual content is accessed and filled into the user interface. This order results in a gradual site composition, that appears to
+be more responsive than larger HTML files with complete reloads. Opposed to this post-loading of content, also preloading techniques can speed up
+the user experience. HTML5 provides a <TT>prefetch</TT> link relation, allowing the browser to load the linked resources in advance.
+As rich, web-based interfaces increasingly use the browser for application features and parts of the business logic, 
+it is also important to handle computations and concurrent tasks efficiently. This has been addressed with the Web Worker API&nbsp;[<A
+ HREF="0_bibliography.html#Hickson2009a">Hic09c</A>], that allows to spawn background workers. For communication and coordination, workers use message-passing, they do not share any data.
+
+<P>
+Concerning the application, it is helpful to have a clear separation of different states. Ideally, the server handles the persistent states 
+of application resources, while the clients handle their own session states and communication is stateless. Traditionally, entirely stateless communication 
+has been difficult, as HTTP cookies have been the primary way of stateful web applications. The Web Storage API&nbsp;[<A
+ HREF="0_bibliography.html#Hickson2009b">Hic09b</A>], related to HTML5, provides
+an alternative mechanism for client-side state handling. This API essentially allows to store key/value pairs via JavaScript in the browser. The API provides persistent state per domain, or scoped to a single browser session. As opposed to HTTP cookies, Web Storage API operations are not placed into HTTP headers, hence
+they keep the communication stateless. This browser storage can also be used to cache data inside the client-side application layer.
+</p>

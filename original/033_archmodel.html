@@ -1,0 +1,348 @@
+<title>3.3 An Architectural Model for Scalabale Web Infrastructures </title>
+
+<meta charset="utf-8">
+
+<link rel="stylesheet" href="../style.css">
+
+<link rel="prev" href="032_cloudarch.html"> 
+<link rel="next" href="034_scaleweb.html"> 
+
+<script src="../script.js"></script>
+
+<h2 id="trad">3.3 An Architectural Model for Scalabale Web Infrastructures </h2>
+
+<p>The need for scalable web architectures is much older than the set of concepts that is subsumed as cloud computing. Pioneer web corporations have learned their own lessons when interest in their services gradually increased and existing capacities where exploited. They were forced to design and build durable infrastructures that were able to keep up with increasing demands. We have a look at some of the more important guidelines and requirements in the following. Then we introduce an architectural model for scalable web infrastructures that is derived from existing cloud infrastructures and addresses the requirements. The resulting model will provide the conceptual basis for our further considerations and allows us to survey concurrency in specific components in the following chapters. </p>
+
+
+<h3 id="design">Design Guidelines and Requirements</h3>
+<p>Let us first make some assumptions on the general design of our infrastructure. We are targeting scalability, thus
+we need to provide a proper scalability path. Although vertical scalability can help us here, it is not our major
+vehicle for scaling. When replacing a single-core CPU with a quad-core machine, we may quadruple the overall performance 
+of that node (if at all). However, we will quickly hit technical constraints and especially limitations of cost effectiveness
+when following this path to scale up further. Thus, our primary mean of growing is horizontal scaling. In an ideal situation,
+this enables us to scale our infrastructural capacities linearly with the provision of additional nodes.
+Horizontal scale inherently forces some kind of distribution. Being much more complex than regular systems, distributed systems 
+introduce a lot of additional problems and design issues to keep in mind.
+Above all, this is the acceptance and graceful handling of failures within the system.
+These two requirements form our fundamental design basis for the infrastructure: We must design for scale, and we must design for failure.
+It is tremendously hard to scale a running system that has not been designed for it. It is neither easy to fix a complex system 
+that fails due to partial failures of conflated subcomponents. As a result, we will now introduce some guidelines to build
+a scalable infrastructure from ground up. 
+
+<P>
+When designing for scale, we are targeting horizontal scalability. Thus, system partitioning and component distribution are essential
+design decisions right at the start. We begin with allocating the components into loosely coupled units and 
+overplanning of capacities and resources. Decoupling of components prevents the (accidental) development of an irreducibly conflated, 
+and highly complex system. Instead, a decoupled architecture suggests a simplified model that eases capacity planning,
+and induces less coherency requirements between components. Isolating components and subservices allows to scale them
+independently and enables the system architect to apply different scaling techniques for the components, such as cloning, splitting and replicating.
+This approach prevents overengineering a monolithic system and favors simpler and easier components.  
+Abbott et al.&nbsp;[<A
+ HREF="0_bibliography.html#Abbott2011">Abb11</A>] suggest to deliberately overplan capacities during design, implementation and deployment. 
+As a ballpark figure, they recommend factor <SPAN CLASS="MATH">20x</SPAN> during the design phase, factor <SPAN CLASS="MATH">3x</SPAN> for the implementation and at least factor <SPAN CLASS="MATH">1.5x</SPAN> for the actual deployment of the system.
+
+<P>
+Designing for failure has several impacts on the architecture. An obvious statement is to avoid single points of failure. Concepts like
+replication and cloning help to build redundant components that tolerate the failure of single nodes without compromising availability.
+From a distribution perspective, Abbott et al.&nbsp;[<A
+ HREF="0_bibliography.html#Abbott2011">Abb11</A>] further recommend a breakdown into <SPAN  CLASS="textit">failure domains</SPAN>.
+These are domains that group components and services in a way that a failure within does not affect or escalate to other failure domains.
+Failure domains help both to detect and isolate partial faults in the system. 
+The concept of so-called <SPAN  CLASS="textit">fault isolative swim lanes</SPAN> takes this idea to the extreme and disallows synchronous calls between the domains
+entirely and also discourages asynchronous calls. Sharding the complete architecture for different groups of users is an example of fault isolative swim lanes.
+
+<P>
+Next, we need a way to communicate between components. It is common practice ([<A
+ HREF="0_bibliography.html#Abbott2009">Abb09</A>,<A
+ HREF="0_bibliography.html#Helland2012">Hel12</A>]) to use messaging
+since it provides an adequate communication mechanism for integrating loosely coupled components. 
+Alternatives such as RPC are less applicable because they require stronger coupling and coherency between components.
+
+<P>
+Another set of advices for scalable architectures concerns time and state, fundamental challenges of distributed systems. 
+As a rule of thumb, all temporal constraints of a system should be relaxed as far as practicable and global state should be
+avoided whenever possible. Of course, the applicability of these advices depends on the actual use case blatantly. 
+For instance, a large-scale online banking system cannot even temporarily tolerate invalid account balances. 
+On the other hand, many applications describe use cases that allow to weaken temporal constraints and consistency to some extent.
+When a user of social network uploads an image or writes a comment, there is no degradation of service when it takes some seconds until it eventually appears for other users.  
+If there are means for relaxing temporal constraints, using asynchronous semantics and preventing distributed global state, 
+they should be considered in any case. Enforcing synchronous behavior and coordinating shared state between multiple nodes 
+are among the hardest problems of distributed systems. Bypassing these challenges whenever possible greatly increases scalability prospects.
+These advices have not only implications for implementations, but also for the general architecture. 
+Asynchronous behavior and messaging should be used unless there is a good reason for synchronous semantics. 
+Weakening global state helps to prevent single point of failures and facilitates service replication. 
+
+<P>
+Caching is another mechanism that helps to provide scalability at various spots. Basically, caching is about storing copies of data with higher demand closer 
+to the places it is actually needed inside the application. Caching can also prevent multiple executions of an idempotent operation by storing 
+and reusing the result. Components can either provide their own internal caches. Alternatively, dedicated caching components provide caching functionalities
+as a service to other components of the architecture. Although caching can speed up an application and improve scalability, it is important to reason
+on appropriate  algorithms for replacement, coherence and invalidation of cached entries.     
+
+<P>
+In practice, it is very important to incorporate logging, monitoring and measuring facilities into the system. Without detailed data about
+utilization and load, it is difficult to anticipate increasing demand and detect bottlenecks before they become critical.
+Taking countermeasures such as adding new nodes and deploying additional component units should be always grounded on a comprehensive set of rules 
+and actual measurements.    
+</p>
+
+<h3 id="components">Components</h3>
+<p>Following these guidelines, we now introduce an architectural model for scalabale web infrastructures. It is based on
+separated components, that provide dedicated services and scale independently. We group them into layers with common functionalities. 
+The components are loosely coupled and use messaging for communication. 
+
+<P>
+For each class of component, we describe its task and purpose and outline a suitable 
+<SPAN  CLASS="textit">scalability strategy</SPAN>. Also, we name some <SPAN  CLASS="textit">real-world examples</SPAN>
+that fit into the particular class and refer to <SPAN  CLASS="textit">cloud-based examples</SPAN> from the popular platforms mentioned before.  </p>
+
+<div class="figure" id="figure/1">
+
+<img src="resources/web_arch.svg" style="width:100%">
+
+<p class="caption">Figure 3.1: An architectural model of a web infrastructure that is designed to scale. Components
+are loosely coupled and can be scaled independently.</p>
+
+</div>
+
+<h4 id="httpd">HTTP Server</h4>
+<p>The first component of our model is the actual HTTP server. It is a network server responsible for accepting and handling incoming HTTP requests 
+and returning responses. The HTTP server is decoupled from the application server. That is the component that handles the real business logic of a request.
+Decoupling both components has several advantages, primarily the separation of HTTP connection handling and execution of application logic .
+This allows the HTTP server to apply specific functions such as persistent connection handling, 
+transparent SSL/TLS encryption (note: Applicability depends on load-balancing mechanism used.) or on-the-fly compression of content without impact on the application server performance. 
+It also decouples connections and requests. If a client uses a persistent connection issuing multiple requests to a web server,
+the requests can still be separated in front of the application server(s).
+Similarly, the separation allows to scale both components independently, based on their individual requirements. 
+For instance, a web application with a high ratio of mobile users has to deal with many slow connections and high latencies. The mobile links cause
+slow data transfers and thus congest the server, effectively slowing down its capability of serving additional clients. By separating application servers
+and HTTP servers, we can deploy additional HTTP servers upstream and gracefully handle the situation by offloading the application server.
+
+<P>
+Decoupling HTTP servers and application servers requires some kind of routing mechanism that forwards
+requests from a web server to an application server. Such a mechanism can be a transparent 
+feature of the messaging component between both server types. Alternatively, web servers can employ
+allocation strategies similiar to the strategies of load balancers.  
+Another task for some of the web servers is the provision of static assets such as images and stylesheets. Here, local or distributed file systems are used
+for content, instead of dynamically generated contents provided by the application servers. 
+<BR>
+<BR>
+<SPAN  CLASS="textit">Scalability strategy:</SPAN> The basic solution for HTTP servers is cloning. As they do not hold any state in our case, this is straightforward.
+
+<P>
+
+<SPAN  CLASS="textit">Real world examples:</SPAN> The <a href="http://httpd.apache.org/">Apache HTTP Server</a> is currently the most popular web server, 
+although there is an increasing number of alternatives that provides better scalability, 
+such as <a href="http://nginx.org/">nginx</a> and <a href="http://www.lighttpd.net/">lighttpd</a>.
+
+<P>
+
+<SPAN  CLASS="textit">Cloud-based examples:</SPAN> The Google App Engine internally uses <a href="http://jetty.codehaus.org/jetty/">Jetty</a>, 
+a Java-based, high-performance web server.
+<BR>
+<BR>
+The implications of scalability and concurrency in case of huge amounts of parallel connections and requests is the main topic of <a href="index.html#chapter/4">chapter 4</a>. 
+
+
+<h4 id="app">Application Server</h4>
+<p>The application server is a dedicated component for handling requests at application level. An incoming request, which is usually 
+received as preprocessed, higher-level structure, triggers business logic operations. As a result, an appropriate response is generated and returned.
+
+<P>
+The application server backs the HTTP server and is a central component of the architecture, as it is the only component that incorporates most of the
+other services for providing its logic. Exemplary tasks of an application server include parameter validation, database querying, communication with
+backend systems and template rendering.    
+<BR>
+<BR>
+<SPAN  CLASS="textit">Scalability strategy:</SPAN> Ideally, application servers adhere to a <SPAN  CLASS="textit">shared nothing</SPAN> style, 
+which means that application servers do not share any platform resources directly, expect for a shared
+database. A shared nothing style makes each node independent and allows to scale via cloning. 
+If necessary, coordination and communication between application servers should be outsourced to shared backend services.
+If there is a tighter coupling of application server instances due to inherent shared state, scalability becomes very difficult 
+and complex at a certain scale.   
+
+<P>
+
+<SPAN  CLASS="textit">Real world examples:</SPAN> Popular environments for web application include dedicated scripting languages such as Ruby (on Rails), PHP or Python.
+In the Java world, application containers like RedHat's JBoss Application Server or Oracle's GlassFish are also very popular.  
+
+<P>
+
+<SPAN  CLASS="textit">Cloud-based examples:</SPAN> The Google App Engine as well as Amazon's Elastic Beanstalk support the Java Servlet technology. 
+The App Engine can also host Python-based and Go-based applications.   
+<BR>
+<BR>
+Programming and handling concurrency inside an application server is subject of <a href="index.html#chapter/5">chapter 5</a>.
+
+
+<h4 id="lb">Load Balancer & Reverse Cache</h4>
+<p>So far, our outer component was the HTTP server. For scaling via multiple web servers, we need an upstream component that balances the load
+and distributes incoming requests to one of the instances. Such a load balancer works either on layer 3/4 or on the application layer (layer 7).
+
+<P>
+An application layer load balancer represents a reverse proxy in terms of HTTP. Different load balancing strategies can be applied, such as
+round-robin balancing, random balancing or load-aware balancing. 
+A reverse cache can further improve the performance and scalability by caching dynamic content generated by the web application. This component
+is again an HTTP reverse proxy and uses caching strategies for storing often requested resources. Thus, the reverse proxy can directly
+return the resource without requesting the HTTP server or application server.     
+
+<P>
+In practice, load balancers and reverse caches can both appear in front of a web server layer. They can also be used together, sometimes even as the 
+same component.
+<BR>
+<BR>
+<SPAN  CLASS="textit">Scalability strategy:</SPAN> Load balancers can be cloned as well. However, different strategies are required to balance their load again. 
+A popular approach to balance a web application is to provide multiple servers to a single hostname via DNS. Reverse caches can be easily 
+cloned, as they provide an easy parallelizable service.   
+
+<P>
+
+<SPAN  CLASS="textit">Real world examples:</SPAN> There are several products used by large-scale web applications. Popular load balancers are 
+<a href="http://haproxy.1wt.eu/">HAProxy</a>, <a href="http://danga.com/perlbal/">perlbal</a> and nginx.
+Reverse proxies with dedicated caching functionalities include <a href="https://www.varnish-cache.org/">Varnish</a> and again nginx.
+
+<P>
+
+<SPAN  CLASS="textit">Cloud-based examples:</SPAN> Amazon provides a dedicated load-balancing service, ELB. 
+<BR>
+<BR>
+Some of the considerations of <a href="index.html#chapter/4">chapter 4</a> are also valid for load balancers and reverse proxies.
+
+
+<h4 id="mq">Message Queue System</h4>
+<p>Some components require special forms of communication, such as HTTP-based interfaces (e.g. web services) 
+or low-level socket-based access (e.g. database connections). For all other communication between components
+of the architecture, a message queue system or message bus is the primary integration infrastructure.
+Messaging systems may either have a central message broker, or work totally decentralized. Messaging systems provide different
+communication patterns between components, such as request-reply, one-way, publish-subscribe or push-pull (fan-out/fan-in),
+different synchronicity semantics and different degrees of reliability.
+<BR>
+<BR>
+<SPAN  CLASS="textit">Scalability strategy:</SPAN> A decentralized infrastructure can provide better scalability,
+when it has no single point of failure and is designed for large deployments. Message-oriented
+middleware systems with a message broker require more sophisticated scaling approaches. These may include partitioning of messaging participants 
+and replication of message brokers.
+
+<P>
+
+<SPAN  CLASS="textit">Real world examples:</SPAN> AMQP&nbsp;[<A
+ HREF="0_bibliography.html#AMQPWorkingGroup2011">AMQ11</A>] 
+ is a popular messaging protocol with several mature implementations, 
+such as <a href="http://www.rabbitmq.com/">RabbitMQ</a>.
+A popular broker-free  and decentralized messaging system is <a href="http://www.zeromq.org/">ØMQ</a>.
+
+<P>
+
+<SPAN  CLASS="textit">Cloud-based examples:</SPAN> Amazon provides a SQS, a message queueing solution. The Google App Engine provides a queue-based solution
+for the handling of background tasks and a dedicated XMPP messaging service. 
+However, all of these services have higher latencies (up to several seconds) for message delivery, are thus designed for other purposes.
+It is not reasonable to use these services as part of HTTP request handling, as such latencies are not acceptable. 
+However, several EC2-based custom architectures have rolled out their own messaging infrastructure, based on the aforementioned products such as ØMQ.  
+
+
+<h4 id="data">Backend Data Storage</h4>
+<p>These components allow to store structured, unstructured and binary data as well as files in a persistent, durable way.
+Depending on the type of data, this includes relational database management systems, non-relational database management systems,
+and distributed file systems.   
+<BR>
+<BR>
+<SPAN  CLASS="textit">Scalability strategy:</SPAN> Scaling data storages is a challenging task, as we will learn in <a href="index.html#chapter/6">chapter 6</a>. 
+Replication, data partitioning (i.e. denormalization, vertical partitioning) and sharding (horizontal partitioning) 
+represent traditional approaches.    
+
+<P>
+
+<SPAN  CLASS="textit">Real world examples:</SPAN> <a href="http://mysql.com/">MySQL</a> is a popular relational database management system with clustering support. 
+<a href="https://github.com/basho/riak">Riak</a>, <a href="http://cassandra.apache.org/">Cassandra</A> and <a href="http://hbase.apache.org/">HBase</a> 
+are typical representatives of scalable, non-relational database management systems. 
+<a href="http://hadoop.apache.org/hdfs/">HDFS</a>, <a href="http://www.gluster.org/">GlusterFS</a> and <a href="http://danga.com/mogilefs/">MogileFS</a> are more prominent examples for distributed file systems used inside large-scale web architectures.
+
+<P>
+
+<SPAN  CLASS="textit">Cloud-based examples:</SPAN> The Google App Egnine provides both a data store and a blob store. Amazon has come up with several different
+solutions for cloud-based data storage (e.g. RDS, DynamoDB, SimpleDB) and file storage (e.g. S3).      
+<BR>
+<BR>
+<a href="index.html#chapter/6">Chapter 6</a> addresses the challenges of concurrency and scalability of storage systems.
+</p>
+
+<h4 id="cache">Cache System</h4>
+<p>In contrast to durable storage components, caching components provide a volatile storage. Caching enables low-latency access to objects with high demand.
+In practice, these components are often key/value-based and in-memory storages, designed to run on multiple nodes. Some caches also support advanced features
+such as publish/subscribe mechanisms for certain keys.
+<BR>
+<BR>
+<SPAN  CLASS="textit">Scalability strategy:</SPAN> Essentially, a distributed cache is a memory-based key/value store. Thus, vertical scale can be achieved by provisioning more
+RAM to the machine. A more sustainable scale is possible by cloning and replicating nodes and partitioning the key space.   
+
+<P>
+
+<SPAN  CLASS="textit">Real world examples:</SPAN> <a href="http://memcached.org/">Memcached</a> is a popular distributed cache. 
+<a href="http://redis.io/">Redis</a>, another in-memory cache, supports structured data types and publish/subscribe channels.
+
+<P>
+
+<SPAN  CLASS="textit">Cloud-based examples:</SPAN> The Google App Engine supports a Memcache API and Amazon provides a dedicated caching solution called ElastiCache.
+<BR>
+<BR>
+Some of the considerations of chapter <a href="index.html#chapter/6">chapter 6</a> are also valid for distributed caching systems.
+
+
+<h4 id="worker">Background Worker Service</h4>
+<p>Computationally-intensive tasks should not be executed by the application server component. For instance, transcoding uploaded video files, generating
+thumbnails of images, processing streams of user data or running recommendation engines belong to these CPU-bound, resource-intensive tasks.
+Often, these tasks are asynchronous, which allows them to be executed in the background independently.  
+<BR>
+<BR>
+<SPAN  CLASS="textit">Scalability strategy:</SPAN> Adding more resources and nodes to the background worker pool generally speeds up the computation 
+or allows the execution of more concurrent tasks, thanks to parallelism. From a concurrency perspective, it is easier to scale worker pools when the jobs are 
+small, isolated tasks with no dependencies.    
+
+<P>
+
+<SPAN  CLASS="textit">Real world examples:</SPAN> <a href="http://hadoop.apache.org/">Hadoop</a> is an open-source implementation of the MapReduce platform, 
+that allows the parallel execution of certain algorithms on large data sets. 
+For real-time event processing, Twitter has released the <a href="https://github.com/nathanmarz/storm">Storm engine</a>, 
+a distributed realtime computation system targeting stream processing among others.
+Spark&nbsp;[<A
+ HREF="0_bibliography.html#Zaharia2010">Zah10</A>] is an open source framework for data analytics designed for in-memory clusters. 
+
+<P>
+
+<SPAN  CLASS="textit">Cloud-based examples:</SPAN> The Google App Engine provides a Task Queue API, that allows to submit tasks to a set of background workers.
+Amazon offers a custom MapReduce-based service, called Elastic MapReduce.
+
+<h4 id="ies">Integration of External Services</h4>
+<p>Especially in an enterprise environment, it is often required to integrate additional backend systems, such as CRM/ERP systems or process engines.
+This is addressed by dedicated integration components, so-called enterprise service buses. An ESB may also be part of a web architecture 
+or even replace the simpler messaging component for integration. 
+On the other hand, the backend enterprise architecture is often decoupled from the web architecture, and web services are used for communication instead.
+Web services can also be used to access external services such as validation services for credit cards.
+<BR>
+<BR>
+<SPAN  CLASS="textit">Scalability strategy:</SPAN> The scalability of external services depends first and foremost on their own design and implementation. We will not consider
+this further, as it is not part of our internal web architecture. Concerning the integration into our web architecture, 
+it is helpful to focus on stateless and scalable communication patterns and loose coupling.
+
+<P>
+
+<SPAN  CLASS="textit">Real world examples:</SPAN> <a href="http://www.mulesoft.org/">Mule</a> and 
+<a href="http://servicemix.apache.org/">Apache ServiceMix</a> are two open-source products providing ESB and integration features.   
+
+<P>
+
+<SPAN  CLASS="textit">Cloud-based examples:</SPAN> Both of the providers we regarded make integration mechanisms for external services available only on a lower level.
+The Google App Engine allows to access external web-based resources via URLFetch API. Furthermore, the XMPP API may be used for message-based communication.
+Similarly, the messaging services from Amazon may be used for integration.</p>
+
+<h3 id="reflection">Critical Reflection of the Model</h3>
+<p>We have now introduced a general architectural model of a web infrastructure that has the capabilities to scale. 
+However, the suggested model is not entirely complete for direct implementation and deployment. We neglected components that are not necessary
+for our concurrency considerations, but that are truly required for operational success. This includes components
+for logging, monitoring, deployment and administration of the complete architecture. Also, we omitted components necessary for security,
+and authentication due to simplicity. When building real infrastructures, it is important to also incorporate these components. 
+
+<P>
+Another point of criticism targets the deliberate split of components. In practice, functionality may be allocated differently, often resulting
+in fewer components. Especially the division of web server and application server may seem arbitrary when regarding certain server applications 
+in use today. However, a conflated design affects our concurrency considerations and often states a more difficult problem in terms of scalability.

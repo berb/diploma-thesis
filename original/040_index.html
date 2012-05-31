@@ -1,0 +1,27 @@
+<title>4. Web Server Architectures for High Concurrency</title>
+
+<meta charset="utf-8">
+
+<link rel="stylesheet" href="../style.css">
+
+<link rel="prev" href="035_summary.html"> 
+<link rel="next" href="041_overview.html"> 
+
+
+<script src="../script.js"></script>
+
+<h2 id="02">4. Web Server Architectures for High Concurrency</h2>
+
+<P>
+In this chapter, we have a closer look at concurrency when handling multiple connections inside a web server.
+As outlined in our architectural model, request handling is decoupled from application logic.
+Thus, the creation of dynamic content is out of scope here, and will be investigated separately in the subsequent <a href="index.html#chapter/5">chapter 5</a>.
+From a web server perspective, there is also no coordination required between two distinct requests.
+If there are dependencies between requests on the application level--e.g. a long-polling request waiting for application events 
+and another request triggering an application event--they must be handled inside the application server in our model.
+
+<P>
+This chapter features an overview on the challenges of concurrency for high-performance web servers with huge
+numbers of simultaneous connections. Next, we learn how different server architectures handle parallelism,
+using different programming models for concurrency and I/O operations.  
+We finally take a step back and compare the prevalent concurrency models--thread-based and event-driven--more generally. 

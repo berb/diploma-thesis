@@ -1,0 +1,145 @@
+<title>1.1 Motivation</title>
+
+<meta charset="utf-8">
+
+<link rel="stylesheet" href="../style.css">
+
+<link rel="prev" href="0_preface.html">
+<link rel="next" href="012_scope.html">
+
+<script src="../script.js"></script>
+
+<h2 id="motivation">1.1 Motivation</h2>
+
+<P>
+Computers have been increasingly influencing our lives in the last decades.
+Distinct eras of computing have elapsed, driven by technological progress 
+and affecting the way we are using computers. These
+shifts of paradigms were motivated mostly by advances in hardware and software
+technology, but also by changes in the way humans interact with computers.
+
+<P>
+The first computers were large machines solely built for dedicated
+applications such as numeric computations. There was no real distinction between
+software and hardware, and new applications could not be executed without
+changing the physical configuration. The instructions were executed directly without
+any operating systems underneath and the program had direct access to
+all system resources. Also, there was no interaction between the
+running program and the user. 
+With the advent of punch cards and batch processing, computers became more
+flexible tools for processing jobs. 
+Not just data--executable programs, too--were now used as input,
+defined in low-level, imperative languages.
+There
+was still no interaction during execution and jobs could only be executed
+sequentially.
+
+<P>
+Machines were expensive but in great demand. The next innovations were
+thus influenced by concepts allowing multiple users to work on the same machine and
+multiple programs to run at the same time--mainframe computers, operating
+systems,  and time-sharing. Terminal-based command line interfaces provided the
+first interactive systems. New programming languages such as FORTRAN or ALGOL 
+allowed the development of larger and more reliable applications without using pure assembly code.
+
+<P>
+The arrival of networking was also the beginning of a new kind of
+computing. Distributed applications not just take advantage of the
+resources of multiple machines, they also allow the existence of federated systems that consist
+of multiple machines remotely located. It promptly became apparent that
+in order to support such systems, additional software on top of a network operating system was necessary.
+Others favored a distributed operating system which provided a high degree of transparency
+and supported migration functions as part of the operating system.
+Early middleware systems based on transaction monitors and remote
+procedure calls emerged, easing the development of distributed applications.
+Existing networks were linked and a global network was formed; the
+Internet. The evolution from mainframes to mini computers, then workstations and
+personal computers, not just urged networking. It also introduced new user
+interaction mechanisms. Consoles were replaced by graphical displays and
+enabled more sophisticated forms of interaction such as direct manipulation. 
+
+<P>
+At that time, the idea of object-oriented programming arose and quickly gained
+much attention. New programming languages such as Simula and Smalltalk
+emerged and embraced this principle.
+After a short time, objects were also considered as distributable units for
+distributed middleware systems.
+
+<P>
+The following era of desktop computing was shaped by personal computers, 
+growing microprocessor clock speeds, graphical user interfaces and desktop
+applications. 
+At the same time, the old idea of non-linear information networks was
+rediscovered and its first real implementation appeared.
+Dating back to Vannevar Bush's MEMEX device and later Ted Nelson's
+concept of documents interconnected through hypertext, the WWW
+represented a truly novel distributed information architecture in the Internet.
+
+<P>
+With the first commercial usage, the WWW scored an instant
+success and soon hit a critical mass of users to become the most popular service
+within the whole Internet. This also motivated a complete transformation of our
+information economy.
+Technological advances at that time predicted the rise of mobile computing that
+should eventually proceed into an era of ubiquitous computing. 
+Computers were not only going to become smaller and smaller, 
+but also omnipresent and produced in various sizes and shapes. 
+This introduced the notion of calm technology-
+-technology
+that immerses into everyday life. Ubiquitous computing also heavily changes the
+way we are interacting with computers. Multi-modal and implicit interactions are
+favored and provide more natural interactions. Devices such as laptops, tablet
+computers, pad computers, mobile phones and smartphones have already blurred the
+boundaries between different types of computing devices. Combined with wireless
+broadband internet access, they have introduced new forms of mobility, providing
+connectivity at all times.
+
+<P>
+While we are currently on the verge of ubiquitous computing, there are other
+trends as well that are influencing the way we think about and do computing right now. 
+The progress of microprocessors has saturated in terms of clock cycles due to 
+physical constraints. Instead, modern CPUs are equipped with increasing numbers
+of cores. This trend has forced developers, architects and language designers to
+leverage multi-core architectures. 
+The web has already started to oust desktop applications. Modern browsers are becoming
+the new operating systems, providing the basic runtime environment for web-based
+applications and unifying various platforms. The web is changing and provides
+continuously more user-centric services. Being able to handle and process huge
+numbers of users is common for social platforms such as Facebook and Twitter
+and corporations like Amazon or Google. Hosting such applications challenges
+traditional architectures and infrastructures. Labeled as so-called "Cloud
+Computing", highly available, commercial architectures emerged. They are built on large clusters
+of commodity hardware and enable applications to scale with varying demand
+over time on a pay-per-use model.
+
+<P>
+Now let us take a step back and summarize a few important developments:
+
+<P>
+
+<OL>
+<LI>The web is a dominant and ubiquitous computing technology. It will
+  replace many traditional desktop application environments and provide ubiquitous information access.
+</LI>
+<LI>Web applications have to cope with increasing demand and scale
+  to larger user bases. Applications that incorporate features such
+  as collaboration and web real-time interaction are facing new challenges as
+  compared to traditional web applications. 
+</LI>
+<LI>Multi-core and multiprocessor architectures will dominate the processor
+  landscape. At least for the next decades, performance gains of processors will mostly be
+  attributed to increasing numbers of cores or processors and not to increased
+  clock cycle frequencies.
+</LI>
+<LI>Large, scalable systems can only be designed when taking into
+  account the essence of distributed and concurrent systems. Appropriate
+  programming languages, frameworks and libraries are necessary to implement
+  such systems.
+</LI>
+</OL>
+
+<P>
+In this thesis, we will bring together these individual developments to have a
+comprehensive analysis of a particular challenge: 
+How can we tackle concurrency when programming scalable web architectures?  
+

@@ -1,0 +1,192 @@
+<title>6.3 Types of Distributed Database Systems</title>
+
+<meta charset="utf-8">
+
+<link rel="stylesheet" href="../style.css">
+
+<link rel="prev" href="062_internals.html"> 
+<link rel="next" href="064_summary.html"> 
+
+
+<script src="../script.js"></script>
+
+<h2 id="63">6.3 Types of Distributed Database Systems</h2>
+
+<p>This section lists the major database system types that are in use for large-scale web applications. The general concept of each type is described and an exemplary product is introduced. 
+
+<h3 id="rdbms">Relational Database Management Systems</h3>
+
+<p>The most common and predominant model for storing data is based on the idea of a relational model,
+introduced by Codd&nbsp;[<A
+ HREF="0_bibliography.html#Codd1970">Cod70</A>] in the early seventies. The model stores data as tuples, forming an 
+ordered set of attributes. In turn, a relation consists of sets of tuples.
+In terms of relational database systems, a tuple is a row, an attribute is a column and a relation forms a table.  
+Tables are defined using a static, normalized data schema and different tables can be referenced using foreign keys. 
+SQL has established itself as generic data definition, manipulation and query language for relational data (e.g. SQL 99&nbsp;[<A
+ HREF="0_bibliography.html#Eisenberg1999">Eis99</A>]).
+It has been adopted by almost all relational database management systems. 
+Relational database implementations typically rely on the support of transaction and locking mechanisms in order to ensure 
+atomicity, isolation, consistency and durability. These properties are essential for the relational model and
+can not be removed due to referential integrity and data consistency issues. 
+
+<P>
+The great success of RDBMS, especially for business applications, has led to increasing scalability 
+requirements for many deployments over time. This not just includes scalability in terms of user load, concurrent
+queries and computational complexities of queries, but also in terms of plain data load.  
+The traditional scale-up approach, using better hardware equipment, has absorbed further needs for growth
+for a certain time. But it soon became obvious that sooner or later, scaling out must be considered as well&nbsp;[<A
+ HREF="0_bibliography.html#Rys2011">Rys11</A>].
+
+<P>
+The implications of the ACID paradigm combined with distributed systems make it very difficult 
+to build distributed database systems based on the relational model. It requires the usage of complex
+mechanisms such as distributed transactions, that are feared by many developers, 
+most of the time with good reason&nbsp;[<A
+ HREF="0_bibliography.html#Helland2009">Hel09</A>,<A
+ HREF="0_bibliography.html#Alvaro2011">Alv11</A>]. 
+Enforcing ACID properties requires high complexity costs and in effect, they promptly hinder low latency and high availability. 
+While replication and especially partitioning provide the basic tools for scaling out, it is the notion of distributed joins that makes distribution so painful.
+Join operations in a single instance database can be efficiently handled thanks to data locality.
+In case of distributed database systems, joins may require potentially large amounts of data to be copied between
+nodes in order to execute the necessary table scans for the join operations. This overhead
+renders such operations in many cases unusable. However, join operations are an inherent feature
+of the relational data model and can not be easily abandoned. 
+On the other hand, the maturity of the relational model and several decades of experience make it still
+worth to spend extraordinary effort and apply complexity to scale out existing relational systems,
+as outlined by Rys&nbsp;[<A
+ HREF="0_bibliography.html#Rys2011">Rys11</A>].
+
+<p>Apart from the big players from the commercial database world, <a href="http://www.mysql.com/">MySQL</a> is a decent open-source RDBMS and it is very popular for web applications. It supports multiple backend storage engines, a broad subset of ANSI SQL 99&nbsp;[<A
+ HREF="0_bibliography.html#Eisenberg1999">Eis99</A>] and several query extensions.  
+Many web applications primarily struggle with read concurrency and scalability in terms of user load.
+Therefore, MySQL provides a simple yet powerful strategy using a master-salve architecture and replication.
+Incoming queries are then forwarded to instances according to the query type. 
+Read-only operations (i.e. <TT>SELECT</TT>) are load-balanced to one of the slaves, while all other operations that contain write operations are forwarded to the master. Updates are then asynchronously replicated 
+from the master to the slaves.
+This removes unnecessary load from the master, and helps to scale read operations. Obviously, it does not scale
+write operations. Master-slave setups can be further scaled using partitioning strategies and more complex
+replication setups&nbsp;[<A
+ HREF="0_bibliography.html#Schwartz2008">Sch08</A>].
+
+<P>
+There also exists MySQL Cluster, a cluster variant of MySQL. It is based on a shared nothing architecture of nodes and uses synchronous replication combined with automatic horizontal data partitioning. Nodes can be either data nodes for storage, or management nodes for cluster configuration and monitoring. Due to the issues of 
+distributed setups, MySQL Cluster has a <a href="http://dev.mysql.com/doc/refman/5.1/en/mysql-cluster-limitations.html">very limited set of features</a> compared to regular 
+MySQL instances.
+
+<h3 id="nosql">Non-Relational Database Management Systems</h3>
+<p>There is a plethora of distributed, non-relational storage systems. We outline four of the most popular types 
+for large-scale web applications, although there are many others including RDF stores, tuple stores, object databases or grid-based storages.   
+ 
+
+<h4 id="kv">Key/Value Stores</h4>
+<p>The idea of key/value-based storage system is very old and it relates to the concept of hash tables or maps in
+many programming languages. The storages allow to record tuples only containing a key and a value. While the 
+key uniquely identifies an entry, the value is an arbitrary chunk of data and in most cases opaque for the database.
+In order to provide distribution and scalability, key/value stores apply concepts from 
+distributed hash tables&nbsp;[<A
+ HREF="0_bibliography.html#Tanenbaum2006">Tan06</A>].
+The simple data model of key/value stores provides good scalability and performance. However, query opportunities are generally very limited, as the database only uses keys for indexes.
+
+<P>
+A very prominent storage system design based on the key/value principle is Dynamo from Amazon&nbsp;[<A
+ HREF="0_bibliography.html#DeCandia2007">DeC07</A>].
+It incorporates several other techniques to provide a database systems that always allows writes, but may
+return outdated results on reads. 
+This eventual consistency is tackled with vector clocks for versioning in case of partitions 
+and application-level conflict resolution.  
+
+<p><a href="http://redis.io/">Redis</a> is an open-source key/value store that works in-memory, but supports optional persistence.  
+As an advanced key/value store, it provides a data model for values and 
+integrates publish/subscribe message channels.
+Persistence of key/value tuples can be achieved either using snapshots or by journaling.
+Redis supports master-slave replication that can be cascaded, resulting in a replication tree. 
+
+<h4 id="document">Document Stores</h4>
+<p>Document stores are similar to key/value stores. However, they require structured data as values using
+formats like XML or JSON. These values are referred to as documents, hence the name. Although the 
+documents are using a structured format, there are often no fixed schema definitions. As a result,
+different documents with complex, varying structures can be stored in the same database, and 
+structures of documents can evolve over time.
+Compared to key/value stores, document stores allow for more complex queries, as document properties can be used
+for indexing and querying.
+
+<p>A popular open-source document store is <a href="http://couchdb.apache.org/">CouchDB</a>. It is written in Erlang and 
+uses JSON as document format. CouchDB only provides an HTTP-based interface, which is inspired by REST. It makes use of different HTTP methods for create/read/update/delete operations on documents and query operations.
+CouchDB uses MapReduce-based functions for generating indexes over all documents. 
+These functions, also written in JavaScript, allow the developer to produce indexes 
+while iterating over the arbitrarily complex structures of each document.
+An exceptional feature of CouchDB is its powerful replication. CouchDB provides bidirectional replication, 
+complex multi-master replication and is designed for offline usage with later data synchronization.
+As replication and concurrent writes may lead to conflicts, CouchDB applies an adapted variant of multiversion concurrency control&nbsp;[<A
+ HREF="0_bibliography.html#Bernstein1981">Ber81</A>,<A
+ HREF="0_bibliography.html#Reed1978">Ree78</A>]. 
+As a consequence, conflicting writes lead to revision trees of document changes, that can be handled or merged later&nbsp;[<A
+ HREF="0_bibliography.html#Anderson2010">And10</A>]. Sharding is not a built-in feature of CouchDB, 
+but there are external solutions that provide horizontal partitioning&nbsp;[<A
+ HREF="0_bibliography.html#Anderson2010">And10</A>].  
+
+<h4 id="wide">Wide Column Stores</h4>
+<p>Wide column stores, sometimes also called sparse tables or column-oriented database systems, 
+are database systems that store data by columns rather than by rows. 
+Many wide column stores are inspired by BigTable&nbsp;[<A
+ HREF="0_bibliography.html#Chang2006">Cha06</A>], a system designed by Google. 
+BigTable is described as a "sparse, distributed, persistent multidimensional sorted map." 
+The map character resembles key/value stores, but the keys are sorted. 
+Persistence and distribution are obvious features of a distributed database systems. 
+The traits of multidimensional and sparse are more important, as they define the essence of a wide column store.
+Multidimensional maps are essentially maps of maps, allowing nested data models. 
+This concept is also known as column families.
+Sparseness describes the fact that a row can have arbitrary numbers columns in each column family, or even
+no column at all. 
+
+<P>
+Besides the different data organization with deep structures and sparseness, the column-oriented storage has several impacts on database behavior. A major benefit is the efficiency of I/O operations during data access,
+when the column-oriented layout speeds up aggregation or column-based search/filter operations. 
+As a column sequentially contains multiple values from different rows, efficient compression techniques can be applied.
+
+<P>
+In essence, wide column stores allow to efficiently store and query on very large, structured data sets. 
+By reducing I/O overhead, queries can be executed faster and compression reduces storage requirements,
+compared to row-oriented systems. 
+Thus, wide column stores are especially interesting for data warehousing and for big data sets, that must be queried.
+However, wide column stores have also several drawbacks. The column orientation increases the costs for
+insert and update operations, especially when not executed as bulk operations for multiple entries.
+A single insert/update results in multiple write operations in spread columns.
+
+<P><a href="http://cassandra.apache.org/">Apache Cassandra</a> is an open source implementation of Google's BigTable&nbsp;[<A
+ HREF="0_bibliography.html#Chang2006">Cha06</A>] that also incorporates several design principles of Amazon's Dynamo&nbsp;[<A
+ HREF="0_bibliography.html#DeCandia2007">DeC07</A>] for fault-tolerance and data replication. 
+Cassandra has been initially developed by Facebook, but has been released as open source.
+An interesting feature is its tunable consistency. By selecting quorum levels, consistency can be exactly
+chosen, ranging from aggressive eventual consistency models to strongly consistent blocking reads.  
+
+<h4 id="graph">Graph Databases</h4>
+<p>Graph database systems are based on graph theory. They use graph structures for data modeling, thus nodes and edges represent and contain data. Nodes are often used for the main data entities, while edges between nodes are used to describe relationships. Both types can be annotated with properties. 
+Graph databases have heavily benefited from the emergence of the Semantic Web&nbsp;[<A
+ HREF="0_bibliography.html#Berners-Lee2001">BL01</A>] 
+and the increasing popularity of location-based services. 
+Both domains require data modeling with multiple relationships between entities, which becomes cumbersome in
+relational database systems. A notable strength of graph databases is the efficient traversal of data sets
+for certain queries. This permits, for example, fast queries for the shortest path between two nodes 
+and other well-known graph-based computations. 
+As opposed to many other database concepts, graph databases have no kind of 
+primary index of all stored items, as the graph structure represents a purely associated data structure.
+That is why many graph databases employ external indexes in order to support text-based searches.
+Graph databases are also used for object-oriented persistence, as the notion of nodes and edges can be 
+applied to objects and references. 
+Graph databases thus circumvent the traditional object-relational impedance mismatch&nbsp;[<A
+ HREF="0_bibliography.html#Ireland2009">Ire09</A>] that occurs when object-oriented data is stored in relational database systems. 
+
+<P>
+In terms of scalability, graph databases encounter a decent challenge. Sharding graph-based data sets means 
+partitioning the graph structure onto different machines. 
+As graphs are highly mutable structures, it is very difficult to find 
+reasonable partitions that allocates graph nodes to available machines while minimizing traversal costs between remote nodes.   
+
+<p>A popular open-source graph database for Java is <a href="http://neo4j.org/">neo4j</a>. It provides a native
+mapping of graph entities to Java objects and a transparent, disk-based persistence of these structures. 
+Other features include transaction support, built-in graph traversers and graph algorithm implementations.
+Besides the native integration as part of a Java application, neo4j also provides a REST-based HTTP interface 
+for data access. It ships with replication and (limited) sharding support.
+
+

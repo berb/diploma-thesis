@@ -1,0 +1,247 @@
+<title>9.1 Emerging Web Architecture Trends</title>
+
+<meta charset="utf-8">
+
+<link rel="stylesheet" href="../style.css">
+
+<link rel="prev" href="090_index.html"> 
+<link rel="next" href="092_progtrends.html"> 
+
+<script src="../script.js"></script>
+
+<h2 id="archtrends">9.1 Emerging Web Architecture Trends</h2>
+
+<p>Web architectures have been considered in <a href="index.html#chapter/3">chapter 3</a>. The entire architecture is designed
+around the essence of the HTTP protocol. If the protocol changes over time, this may also affect the architecture.
+Furthermore, the design and the internals of the components of a web architecture may be influenced by other trends as well.</p>
+
+<h3 id="http">The Future of the HTTP Protocol</h3>
+<p>
+When the web was getting increasingly popular in the the mid and late nineties, the final HTTP/1.1 specification
+was published under a lot of pressure. This has led to several inaccuracies and ambiguous statements and 
+artifacts in the resulting standard&nbsp;[<A
+ HREF="0_bibliography.html#Nottingham2012">Not12</A>].
+Consequently, the IETF constituted the <a href="http://tools.ietf.org/wg/httpbis/">HTTPbis Working Group</a>,
+which is responsible for maintaining the standard. The working group not just collects problems with the current
+standard, but also revises and clarifies the specification, especially with regard to conditional requests, range requests, caching and authentication. 
+It is planned that these improvements eventually transition into the HTTP/2.0 specification.</p>
+
+<h4 id="exhttp">Extension Protocols to HTTP/1.1</h4>
+<P>
+Besides misconceptions in the HTTP/1.1 specification, other problems and weaknesses of HTTP/1.1 have been manifested in the field. 
+Common points of criticism include performance issues, high latencies, verbose message formats and
+weak support for extensions like custom HTTP authentication mechanisms. The rigid client-initiated 
+request/response cycle has also been criticized, because highly interactive web applications often require
+server-initiated communication as well. 
+This has not just been addressed in the WebSocket protocol&nbsp;[<A
+ HREF="0_bibliography.html#RFC6455">Fet11</A>] recently, 
+but also by specific HTTP protocol extensions such as Full-Duplex HTTP&nbsp;[<A
+ HREF="0_bibliography.html#Zhu2011">Zhu11</A>].   
+Similar HTTP protocol extensions like HTTP-MPLEX&nbsp;[<A
+ HREF="0_bibliography.html#Mattson2009">Mat09</A>] integrate multiplexing
+and header compression into the protocol. </p>
+
+<h4 id="waka">The waka Protocol</h4>
+<P>
+Fielding, who has introduced the REST architectural style&nbsp;[<A
+ HREF="0_bibliography.html#Fielding2000">Fie00</A>], has also identified drawbacks 
+of HTTP when using REST as an integration concept for large enterprise architectures.
+Drawbacks include head of line blocking of pipelined requests and legacy issues
+with verbose message headers. Also, Fielding denotes the absence of unsolicited responses and better
+messaging efficiency, especially for low-power and bandwidth-sensitive devices.   
+Consequently, Fielding has started to work on <a href="http://tools.ietf.org/agenda/83/slides/slides-83-httpbis-5.pdf">waka</a>, a token-based, binary protocol replacement for HTTP.
+It is deployable via HTTP, using the <TT>Upgrade</TT> header and introduces new methods on resources like
+<TT>RENDER</TT> or <TT>MONITOR</TT>. Request and transaction identifiers are used to decouple request and response messages,
+allowing more loosely coupled communication patterns.  
+Waka can be used with different transport protocols and it is not limited to TCP. 
+Besides binary communication, waka uses interleaved messages for better performance. 
+Fielding is still working on the waka specification, and there is no draft available yet.</p>
+
+<h4 id="spdy">SPDY</h4>
+<p>Other efforts for more efficient web protocols have been expended in the industry.
+The most popular initiative is led by Google and works on an application-layer protocol called SPDY&nbsp;[<A
+ HREF="0_bibliography.html#Belshe2009">Bel09</A>]. 
+SPDY focuses on efficient transporting of web content, mainly by reducing request latencies. 
+In HTTP/1.1, performance (i.e. throughput) can be increased by using multiple persistent connections and pipelining.  
+According to the SPDY protocol designers, this connection concurrency is responsible for increased latencies of complex web sites.
+They argue that a single connection between the client and the server is more efficient, when combined with
+multiplexed streams, request prioritization and HTTP header compression. 
+Advanced features of SPDY include server-initiated pushes and built-in encryption. SPDY is designed
+for TCP as the underlying transport protocol. SPDY is already in use by Amazon, Twitter and Google services,
+and the browsers Google Chrome and Mozilla Firefox provide client-side protocol implementations. 
+Microsoft has suggested an alternative HTTP replacement, called HTTP Speed+Mobility&nbsp;[<A
+ HREF="0_bibliography.html#Foresti2012">For12</A>]. 
+It incorporates concepts of SPDY and the WebSocket protocol, 
+but it is enriched with optional protocol extensions for mobile devices.</p>
+
+<h4 id="http20">HTTP/2.0</h4>
+<p>
+At the time of writing in early 2012, the HTTPbis Working Group has been <a href="http://lists.w3.org/Archives/Public/ietf-http-wg/2012JanMar/0098.html">rechartered</a> and 
+is about to start work on an upcoming HTTP/2.0 draft&nbsp;[<A
+ HREF="0_bibliography.html#Nottingham2012">Not12</A>].
+We have seen recurring concepts in the different protocols. 
+Fortunately, most of the ideas have been  
+acknowledged by the HTTPbis group and their protocol designers are in close dialog.
+Thus, the aforementioned protocols may influence the design of HTTP/2.0 and boost the HTTP/2.0 specification.</p> 
+
+<h3 id="pers">New Approaches to Persistence</h3>
+
+<p>The NoSQL hype has already been shaking the database world and has led to a more versatile toolbox for persistence in the mind of developers and architects. Still, relational database systems are the most prominent and popular choices for persistence. However, there is some general criticism on the essence of current RDBMS. </p>
+
+<h4 id="rdbms">Future Architectures of RDBMS</h4>
+<p>
+Stonebraker et al.&nbsp;[<A
+ HREF="0_bibliography.html#Stonebraker2007">Sto07</A>] point out that RDBMS are still carrying the legacy architecture
+of the first relational database systems such as System R. These systems have been designed mainly for
+the business data processing at that time, and not as a general-purpose solution for all kinds of persistence.
+Also, different hardware architectures prevailed at that time, and interactive command line interfaces for queries constituted the primary user interface for database access.
+In order to provide high performance and throughput on machines available back then, 
+traditional concepts such as disk-based storage and indexing structures, locking-based concurrency control and
+log-based failure recovery have been developed and implemented. Latency has been hidden by extensive use of multithreading.
+Although these concepts have been complemented with other technologies over time, 
+they still represent the core architecture for each RDBMS available. 
+Stonebraker argues that this architecture is not appropriate anymore. It is especially not appropriate, 
+when RDBMS are used in a "one-size-fits-all" manner for many different kinds of persistence applications.
+According to Stonebraker, a "complete rewrite" is necessary in order to provide high performance architectures for specialized database applications, with distinct requirements. 
+Only a rewrite would allow to get rid of architectural legacy concepts and to realign on hardware trends such as multi-core architectures and large main memories. Furthermore, Stonebraker campaigns for a better integration of database access and manipulation as part of the programming model without exposed intermediate query languages like SQL. In their work&nbsp;[<A
+ HREF="0_bibliography.html#Stonebraker2007">Sto07</A>], they introduce a prototype for such a new database system. 
+The system runs multiple single-threaded instances without any communication and resides in main memory. It is still a row-oriented relational database and provides full ACID semantics. 
+It appears that not just NoSQL databases will provide more specialized solutions for different usage scenarios. 
+If Stonebraker ends up being right, we will also see further diversification of relational database management systems and engines for online transaction processing. </p>
+
+<h4 id="inmemory">In-Memory Database Systems</h4>
+<P>
+The idea of in-memory database systems&nbsp;[<A
+ HREF="0_bibliography.html#Salem1992">Gm92</A>] and hybrid in-memory/on-disk systems becomes increasingly popular, as the performance increases of new CPUs, main memory components and harddisk technologies tend to drift apart. 
+When low latencies are required, for example for interactive and real-time applications, in-memory database systems represent an attractive solution. When durability is required, they can be combined with asynchronous, non-volatile disk-based persistence.
+</p>
+
+
+<h4 id="escqrs">Event Sourcing and CQRS</h4>
+
+<P>
+And others again generally raise to question the way we are handling and persisting mutable state in applications.
+An alternative paradigm, which is increasingly receiving attention, is the combination of two patterns: event sourcing&nbsp;[<A
+ HREF="0_bibliography.html#Fowler2005">Fow05</A>] and CQRS&nbsp;[<A
+ HREF="0_bibliography.html#Dahan2009">Dah09</A>]. 
+ 
+ 
+<div class="figure" id="figure/1">
+
+<img src="resources/es_cqrs.svg" style="width:100%">
+
+<p class="caption">Figure 9.1: A very simplified illustration of the flow control in an architecture that uses CQRS and event sourcing.</p>
+
+</div>
+ 
+<P>
+The underlying idea of event sourcing is to capture all state changes explicitly as domain events.
+Thus, the current application state becomes the result of the sequence of all events captured so far. 
+Events are stored using a durable event log (e.g. a database). 
+Instead of changing and updating existing state in a database, new events are emitted when application actions take place. This has several benefits. For instance, listeners can easily be added to the stream of events and
+react to specific events or group of events in an asynchronous manner. 
+The main benefit of event sourcing is the ability to replay state evolution. 
+All events are persisted, hence the application can rebuild any prior state by reapplying the events from the event log. Even alternative orderings or the effect of injected additional events can be analyzed. 
+Event sourcing also supports snapshotting, since events natively represent incremental updates.        
+
+<P>
+Traditional persistence layers provide a single model for reading, reporting, searching and transactional behavior. The CQRS pattern decouples different concepts, namely command operations and query operations,
+using separate models. This separation of concerns improves scalability and integrates an eventually consistent behavior into the application model.      
+
+<P>
+When both patterns are combined, as shown in <a href="#figure/1">figure 9.1</a>tmp, command operations emit new events, which are added to the event log. Based
+on the event log, the current application state is built and can be queried, entirely decoupled from commands. This encapsulated approach provides interesting scalability properties and may find its way into future web architectures.
+
+
+
+<h3 id="latencies">Tackling Latencies of Systems and Architectures</h3>
+
+<p>Coping with latencies is one of the big issues of large-scale architectures and distributed systems.
+Increasingly complex multi-core CPU architectures with multiple cache levels and sophisticated optimization mechanisms have also widened the latency gap of local operations. 
+<a href="#table/1">Table 9.1</a> shows the vast differences of latencies of various local and remote operations. 
+When designing and implementing low latency systems, it is inevitable to take into account these numbers--both locally and for distributed operations.
+The fact that hundreds of machines of a web architecture may work together for responding to a single request should not be obvious for the user just by yielding high latencies.</p> 
+
+
+<div class="figure" id="table/1">
+
+<table>
+<thead>
+
+<TR><TH ALIGN="LEFT"><SPAN  CLASS="textbf">Operation</SPAN></TH>
+<TH ALIGN="RIGHT"><SPAN  CLASS="textbf">Latency</SPAN></TH>
+</TR>
+</thead>
+<tbody>
+<TR><TD ALIGN="LEFT">L1 cache reference</TD>
+<TD ALIGN="RIGHT">0.5 ns</TD>
+</TR>
+<TR><TD ALIGN="LEFT">Branch mispredict</TD>
+<TD ALIGN="RIGHT">5 ns</TD>
+</TR>
+<TR><TD ALIGN="LEFT">L2 cache reference</TD>
+<TD ALIGN="RIGHT">7 ns</TD>
+</TR>
+<TR><TD ALIGN="LEFT">Mutex lock/unlock</TD>
+<TD ALIGN="RIGHT">25 ns</TD>
+</TR>
+<TR><TD ALIGN="LEFT">Main memory reference</TD>
+<TD ALIGN="RIGHT">100 ns</TD>
+</TR>
+<TR><TD ALIGN="LEFT">Compress 1K bytes w/ cheap algorithm</TD>
+<TD ALIGN="RIGHT">3,000 ns</TD>
+</TR>
+<TR><TD ALIGN="LEFT">Send 2K bytes over 1 Gbps network</TD>
+<TD ALIGN="RIGHT">20,000 ns</TD>
+</TR>
+<TR><TD ALIGN="LEFT">Read 1 MB sequentially from memory</TD>
+<TD ALIGN="RIGHT">250,000 ns</TD>
+</TR>
+<TR><TD ALIGN="LEFT">Round trip within same datacenter</TD>
+<TD ALIGN="RIGHT">500,000 ns</TD>
+</TR>
+<TR><TD ALIGN="LEFT">Disk seek</TD>
+<TD ALIGN="RIGHT">10,000,000 ns</TD>
+</TR>
+<TR><TD ALIGN="LEFT">Read 1 MB sequentially from disk</TD>
+<TD ALIGN="RIGHT">20,000,000 ns</TD>
+</TR>
+<TR><TD ALIGN="LEFT">Send packet CA-&gt;Netherlands-&gt;CA</TD>
+<TD ALIGN="RIGHT">150,000,000 ns</TD>
+</TR>
+
+
+</tbody>
+
+</table>
+
+<p class="caption">Table 9.1: Common operations and their average latencies. Note that these numbers are exemplary
+and platform dependent. Yet, they give a rough round-up on the impact of different operations.
+Source: <a href="http://stanford-online.stanford.edu/courses/ee380/101110-ee380-300.asx">Talk "Building Software Systems at Google and Lessons Learned"</a> by Jeffrey Dean (Google) at Standford.</p>
+
+</div>
+
+<P>
+The classical model of a Von Neumann architecture running sequential executions may still provide
+a theoretical abstraction for programmers, but modern hardware architectures have slowly diverged from it.  
+For tackling latency locally, it is important to understand the implications and properties of modern CPU architectures, operating systems and runtime environments such as the JVM. 
+This notion, sometimes referred to as "mechanical sympathy"&nbsp;[<A
+ HREF="0_bibliography.html#Thompson2011">Tho11</A>], has renewed interest in approaches like cache-oblivious algorithms&nbsp;[<A
+ HREF="0_bibliography.html#Frigo1999">Fri99</A>]. 
+These algorithms take into account the properties of the memory hierarchy of a CPU. They favor cache-friendly algorithm designs over algorithms that solely reflect computational complexity.
+A recent example is the Disruptor&nbsp;[<A
+ HREF="0_bibliography.html#Thompson2011">Tho11</A>], which is a high performance queue replacement for data exchange
+between concurrent threads. The Disruptor basically uses a concurrent, pre-allocated ring buffer with custom barriers for producer/consumer coordination. It does not use locks and heavily promotes CPU caching.   
+
+<P>
+The latency of remote operations is more difficult to tackle. Network latencies are generally bounded by physical constraints. Of course, efficient infrastructure layouts for data centers are a prerequisite.
+However, Rumble et al. claim that "it's time for low latency" for the network&nbsp;[<A
+ HREF="0_bibliography.html#Rumble2011">Rum11</A>] in general. 
+They demonstrate that between the years 1983 and 2011, network latencies have improved far more slowly (<SPAN CLASS="MATH">~ 32x</SPAN>)  than CPU speed (<SPAN CLASS="MATH">&gt; 1,000x</SPAN>), memory size (<SPAN CLASS="MATH">&gt; 4,000x</SPAN>), disk capacity (<SPAN CLASS="MATH">&gt; 60,000x</SPAN>) or network bandwidth (<SPAN CLASS="MATH">&gt; 3,000x</SPAN>). According to their analysis, this is mainly caused by legacy technology stacks. 
+Rumble et al. argue that round trip times of <SPAN CLASS="MATH">5-10 &mu;s</SPAN> are actually possible in a few years.
+New network interface controllers already pave the way for such latencies, but current operating systems 
+still represent the major obstacle. Without an entire redesign, the traditional network stacks are not 
+capable of such low latencies. 
+Rumble et al. also note that this change requires new network protocols that are aware of such low latencies.
+Once available, low latency networking may partially influence distributed computing, as it bridges 
+the gap between local and remote operations and provides better temporal transparency.
