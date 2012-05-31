@@ -11,7 +11,7 @@ var l10n = {
         "draftEdition": "Draft edition",
         "draftNotice": "This is the community edition. Please <a href='http://github.com/berb/diploma-thesis/issues/'>create a ticket or pull request</a> for any corrections, suggestions and enhancements. ",
         "edition": "Edition",
-        "editionNotice": "This is the original version of the thesis. There is also an <a href='#'>alternative version</a> that can be collaboratively extended.",
+        "editionNotice": "This is the original version of the thesis. There is also an <a href='../community/index.html'>alternative version</a> that can be collaboratively extended.",
         "footer": "Diploma Thesis by <a href='http://www.benjamin-erb.de'>Benjamin Erb</a>, released under a <a href='http://creativecommons.org/licenses/by/3.0/de/'>Creative Commons</a> license",
         "home": "Home",
         "nextPage": "Next Page",
