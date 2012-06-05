@@ -229,7 +229,7 @@ function build_edition(matches) {
     var language = languages[matches[2]];
     var page = matches[3];
     var edition_text = l10n[lang].edition + " " + edition + " (" + language + ")";
-    link_logo("../../../index.html");
+    link_logo("../../index.html");
     add_notice_edition(edition);
     $(".sidebar").append("<h3><a href='../index.html'>"+l10n[lang].home+"</a></h3>");
     if (page == "index") {
