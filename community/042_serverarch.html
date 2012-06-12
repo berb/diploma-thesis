@@ -212,7 +212,7 @@ For the moment, the easier concurrency model of having a single-threaded server 
 It is exactly this simple execution model that makes single-threaded applications attractive for developers, as the efforts of coordination
 and synchronization are diminished and the application code (i.e. callbacks) is guaranteed not to run concurrently.
 On the other hand, this characteristic intrinsically prevents the utilization of multiple processes inside a single event-driven application.
-Zeldovich et al. have addresses this issue with <SPAN  CLASS="textit">libasync-smp</SPAN>&nbsp;[<A
+Zeldovich et al. have addressed this issue with <SPAN  CLASS="textit">libasync-smp</SPAN>&nbsp;[<A
  HREF="0_bibliography.html#Zeldovich2003">Zel03</A>], an asynchronous programming library taking advantage of 
 multiple processes and parallel callback execution. The simple sequential programming model is still preserved. The basic idea is the usage of tokens,
 so-called colors assigned to each callback. Callbacks with different colors can be executed in parallel, while serial execution is guaranteed for 
