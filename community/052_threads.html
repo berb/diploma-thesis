@@ -106,7 +106,7 @@ and provides several synchronization primitives as part of the language core.
 The concurrency behavior is defined in the Java Language Specification&nbsp;[<A
  HREF="0_bibliography.html#Gosling2012">Gos12</A>]
 which describes the JMM in detail. Java's consistency is based on a happens-before order and the notion of an implicit memory barrier. However, it does not provide sequential consistency for threads, as many developers erroneously assume.
-In fact, the JMM resembles symmetric multi-processing, where multiple CPUs have their own cache, but share a common maim memory. When CPUs access memory, they refresh their cache and eventually flush changes.
+In fact, the JMM resembles symmetric multi-processing, where multiple CPUs have their own cache, but share a common main memory. When CPUs access memory, they refresh their cache and eventually flush changes.
 In a metaphorical sense, Java threads resemble the CPUs, the main memory is the shared memory between threads and the CPU caches are thread local copies of data.
 The procedure of flushing or refreshing represents the traversal of a so-called memory barrier. 
 Besides the aforementioned ordering, JMM defines also which operations cannot be interrupted by other threads (atomicity) and when changes have to be propagated to other threads (visibility), based on the memory barrier.
