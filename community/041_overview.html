@@ -134,7 +134,7 @@ data is available in user space, the application can continue to run and use the
 In so doing, multiple I/O descriptors can be passed to the system call. When the implementation of the blocking system call for notifications is sound and performant, this is good model for highly concurrent I/O.
 </DD>
 <DT><STRONG>asynchronous non-blocking I/O</STRONG></DT>
-<DD>This I/O model immediately returns from I/O calls. On completition, an event is emitted or a callback is executed. The interesting characteristics of this model is the fact there is no blocking or busy-waiting on user level. The entire operation is shifted to the kernel space. This allows the application to take advantage of additional CPU time while the I/O operations happens in the background on kernel level. 
+<DD>This I/O model immediately returns from I/O calls. On completion, an event is emitted or a callback is executed. The interesting characteristics of this model is the fact there is no blocking or busy-waiting on user level. The entire operation is shifted to the kernel space. This allows the application to take advantage of additional CPU time while the I/O operations happens in the background on kernel level. 
 In other words, the application can overlap the I/O operations with additional CPU-bound operations or dispatch additional I/O operations in the meantime.
 Unsurprisingly, this model also provides good performance under highly concurrent I/O.
 </DD>

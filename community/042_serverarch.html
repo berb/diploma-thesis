@@ -170,15 +170,15 @@ While this improves performance on multi-core platforms, an additional overhead 
 <p>In contrast, the Proactor pattern&nbsp;[<A
  HREF="0_bibliography.html#Pyarali1997">Pya97</A>] leverages truly <SPAN  CLASS="textit">asynchronous, non-blocking I/O</SPAN> operations, as provided by interfaces such as <a href="http://www.kernel.org/doc/man-pages/online/pages/man7/aio.7.html">POSIX AIO</a>.
 As a result, the Proactor can be considered as an entirely asynchronous variant of the Reactor pattern seen before.
-It incorporates support for completition events instead of blocking event notification interfaces. 
+It incorporates support for completion events instead of blocking event notification interfaces. 
 A proactive initiator represents the main application thread and is responsible for initiating asynchronous I/O operations. 
-When issuing such an operation, it always registers a completition handler and completition dispatcher.
+When issuing such an operation, it always registers a completion handler and completion dispatcher.
 The execution of the asynchronous operation is governed by the asynchronous operation processor, an entity that is part of the OS in practice.
-When the I/O operation has been completed, the completition dispatcher is notified. Next, the completition handler processes the resulting event.
+When the I/O operation has been completed, the completion dispatcher is notified. Next, the completion handler processes the resulting event.
 
 <P>
 An important property in terms of scalability compared to the Reactor pattern is the better multithreading support. 
-The execution of completition handlers can easily be handed off to a dedicated thread pool.
+The execution of completion handlers can easily be handed off to a dedicated thread pool.
 
 <h4 id="scaleev">Scalability Considerations for Event-driven Architectures</h4>
 <p>Having a single thread running an event loop and waiting for I/O notifications has a different impact on scalability 
