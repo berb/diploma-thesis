@@ -155,7 +155,7 @@ backend systems and template rendering.
 <BR>
 <BR>
 <SPAN  CLASS="textit">Scalability strategy:</SPAN> Ideally, application servers adhere to a <SPAN  CLASS="textit">shared nothing</SPAN> style, 
-which means that application servers do not share any platform resources directly, expect for a shared
+which means that application servers do not share any platform resources directly, except for a shared
 database. A shared nothing style makes each node independent and allows to scale via cloning. 
 If necessary, coordination and communication between application servers should be outsourced to shared backend services.
 If there is a tighter coupling of application server instances due to inherent shared state, scalability becomes very difficult 
@@ -259,7 +259,7 @@ are typical representatives of scalable, non-relational database management syst
 
 <P>
 
-<SPAN  CLASS="textit">Cloud-based examples:</SPAN> The Google App Egnine provides both a data store and a blob store. Amazon has come up with several different
+<SPAN  CLASS="textit">Cloud-based examples:</SPAN> The Google App Engine provides both a data store and a blob store. Amazon has come up with several different
 solutions for cloud-based data storage (e.g. RDS, DynamoDB, SimpleDB) and file storage (e.g. S3).      
 <BR>
 <BR>
