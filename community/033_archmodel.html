@@ -155,7 +155,7 @@ backend systems and template rendering.
 <BR>
 <BR>
 <SPAN  CLASS="textit">Scalability strategy:</SPAN> Ideally, application servers adhere to a <SPAN  CLASS="textit">shared nothing</SPAN> style, 
-which means that application servers do not share any platform resources directly, expect for a shared
+which means that application servers do not share any platform resources directly, except for a shared
 database. A shared nothing style makes each node independent and allows to scale via cloning. 
 If necessary, coordination and communication between application servers should be outsourced to shared backend services.
 If there is a tighter coupling of application server instances due to inherent shared state, scalability becomes very difficult 
