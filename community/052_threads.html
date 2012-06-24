@@ -113,7 +113,7 @@ Besides the aforementioned ordering, JMM defines also which operations cannot be
 For instance, starting and ending a thread or using synchronization primitives touches the memory barrier, but also access to several variables with specific traits (see below).   
 
 <P>
-The <TT>synchronized</TT> keyword allows to guard an entire method or a distinct code block, using the callee resp. a given object as monitor object. Java monitors are reentrant and recursive calls are supported.
+The <TT>synchronized</TT> keyword guards an entire method or a distinct code block using a given object as monitor. Java monitors are reentrant and recursive calls are supported.
 Furthermore, every Java <TT>Object</TT> can be used as a monitor and hence provides means for condition signaling. The method <TT>wait()</TT> blocks the thread holding the monitor and releases the monitor in order to allow other threads to proceed and change the condition. In this case the other threads can use <TT>notify()</TT> and <TT>notifyAll()</TT> for signaling a waiting thread.  
 
 <P>
