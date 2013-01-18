@@ -23,7 +23,7 @@
 CGI can be used when the interface is supported by both the web server and the external application. In practice, most of these applications
 are implemented using scripting languages. For each incoming request against a URI mapped to a CGI application, the web server spawns a new process.
 This process executes the CGI application and provides specific variables such as request headers and server variables via environment variables.
-Request entities can be read by the CGI process via <TT>STDIN</TT>, and the the generated response (both headers and the response entity) 
+Request entities can be read by the CGI process via <TT>STDIN</TT>, and the generated responses (both headers and the response entity) 
 are written to <TT>STDOUT</TT>. After generating the response, the CGI process terminates. 
 Only using external processes and communication via environment variables, <TT>STDIN</TT> and <TT>STDOUT</TT> provides a simple interface. It allows
 any application to handle and generate web content when supporting these basic mechanisms.
@@ -106,7 +106,7 @@ of connection forwarding&nbsp;[<A
 Dedicated network appliances can provide impressive performances in terms of throughput, alas with a heavy price tag. Solutions based on <SPAN  CLASS="textit">IP virtual servers</SPAN> running on regular hardware often provide a more affordable solution with reasonable performance up to a certain scale.</p>
 
 <h5 id="layer7">Layer 7</h5>
-<p>Load balancers operating on the application layer are essentially reverse proxies in terms of HTTP. As opposed to the balancers working on lower layers, the layer 7 load balancers can take advantage of explicit protocol knowledge. This comes with clear performance penalties due to a higher overhead of parsing traffic up to the application layer. Benefits of this technique are the the possibility of HTTP-aware balancing decisions, potential caching support, transparent SSL termination and other HTTP-specific features. Similar to IP virtual servers, layer 7 balancers are less performant than web switches. But being hosted on commodity hardware results in a decent horizontal scalability.</p>
+<p>Load balancers operating on the application layer are essentially reverse proxies in terms of HTTP. As opposed to the balancers working on lower layers, the layer 7 load balancers can take advantage of explicit protocol knowledge. This comes with clear performance penalties due to a higher overhead of parsing traffic up to the application layer. Benefits of this technique are the possibility of HTTP-aware balancing decisions, potential caching support, transparent SSL termination and other HTTP-specific features. Similar to IP virtual servers, layer 7 balancers are less performant than web switches. But being hosted on commodity hardware results in a decent horizontal scalability.</p>
 
 <h4 id="balancing">Balancing Strategies</h4>
 <P>
