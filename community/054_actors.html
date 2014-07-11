@@ -137,7 +137,7 @@ Some transactors also apply STM concepts for transactional behavior&nbsp;[<A
 <P>
 While Erlang spawns multiple low-level threads and implements a custom scheduler for running actors, Scala is somehow caught by the multithreading implications of the JVM. 
 Furthermore, the actor implementation of Scala is not part of the language core, but part of its standard library. This means that actor library itself is implemented in Scala.   
-One initial challenge of Scala actors has been introduced by the constraints of multithreading in the JVM. The number of possible threads is limited, there is no cooperative scheduling available and threads are conceptually less leightweight than actors are supposed to be.   
+One initial challenge of Scala actors has been introduced by the constraints of multithreading in the JVM. The number of possible threads is limited, there is no cooperative scheduling available and threads are conceptually less lightweight than actors are supposed to be.   
 As a result, Scala provides a single concept of an actor, but two different mechanisms for message handling&nbsp;[<A
  HREF="0_bibliography.html#Haller2006">Hal06</A>,<A
  HREF="0_bibliography.html#Haller2008">Hal08</A>].

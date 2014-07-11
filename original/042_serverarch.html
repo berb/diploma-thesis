@@ -73,12 +73,12 @@ multi-processing module for UNIX-based setups of Apache.
 <h4 id="mt">Multi-Threaded Architectures</h4>
 
 <P>
-When reasonable threading libraries have become available, new server architectures emerged that replaced heavyweight processes with more leightweight threads.
+When reasonable threading libraries have become available, new server architectures emerged that replaced heavyweight processes with more lightweight threads.
 In effect, they employ a thread-per-connection model. Although following the same principles, the multi-threaded approach has several important differences.
 First of all, multiple threads share the same address space and hence share global variables and state. 
 This makes it possible to implement mutual features for all request handlers, such as a shared cache for cacheable responses inside the web server. 
 Obviously, correct synchronization and coordination is then required. 
-Another difference of the more leightweight structures of threads is their smaller memory footprint. Compared to the full-blown memory size of an entire process,
+Another difference of the more lightweight structures of threads is their smaller memory footprint. Compared to the full-blown memory size of an entire process,
 a thread only consumes limited memory (i.e. the thread stack). Also, threads require less resources for creation/termination. 
 We have already seen that the dimensions of a process are a severe problem in case of high concurrency. Threads are generally a more efficient replacement
 when mapping connections to activities.
