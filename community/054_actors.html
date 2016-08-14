@@ -86,7 +86,7 @@ in fact resembles network-based communication. The isolation of states to actors
 <P>
 Conventional, thread-based concurrency gives fault tolerance a hard fight. Nondeterminism and unpredictable scheduling combined with shared state and locking requires very complex strategies for replication and snapshotting.
 The actor model comes up with other primitives that makes replication much easier. Isolated states and incoming messages queued in actors' mailboxes are very similar to snapshots and logs. Message handling of an actor is single-threaded and provides implicit yielding points.
-Erlang embraces a "let is crash" philosophy&nbsp;[<A
+Erlang embraces a "let it crash" philosophy&nbsp;[<A
  HREF="0_bibliography.html#Armstrong2007">Arm07</A>]. The isolated, shared nothing trait of actors allows a single actor to fail without affecting any other actors.
 Furthermore, the actor model itself can be used for fault tolerance, by spawning hierarchy trees of actors 
 for supervision. 
