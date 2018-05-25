@@ -30,9 +30,6 @@ var scripts = [
 //    "http://christophercliff.github.com/sausage/jquery.sausage.js"
 ];
 
-var pkBaseURL = (("https:" == document.location.protocol) ? "https://stats.benjamin-erb.de/piwik/" : "http://stats.benjamin-erb.de/piwik/");
-scripts.push(pkBaseURL + "piwik.js");
-
 
 
 for(i = 0; i < scripts.length; i++) {
@@ -318,15 +315,6 @@ function get_lang() {
     }
 }
 
-function track() {
-	try {
-		var piwikTracker = Piwik.getTracker(pkBaseURL + "piwik.php", 6);
-		piwikTracker.trackPageView();
-		piwikTracker.enableLinkTracking();
-	} catch( err ) {}
-	$("body").append('<noscript><p><img src="http://stats.benjamin-erb.de/piwik/piwik.php?idsite=6" style="border:0" alt="" /></p></noscript>');
-}
-
 function access(evt){
     prevNext=document.getElementsByTagName("link");
     if(evt.keyCode==37){location=prevNext[1].href}
@@ -343,7 +331,6 @@ document.onready = function() {
         build();
         autolink();
         chop();
-        track();
         sausage();
     } catch (error) {
         // uh oh
