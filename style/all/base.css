@@ -64,6 +64,7 @@ body {
   font-size: 100%;
   color: #000;
   background: #F6f6F6 url(../../image/bg/base.png) repeat 0 0;
+  margin-left: 10px;
 }
 
 h3 {
